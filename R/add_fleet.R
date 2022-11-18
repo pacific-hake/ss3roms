@@ -119,8 +119,8 @@ add_fleet <- function(datlist,
   # Determine some info from the arguments
   fleettype <- match.arg(fleettype, several.ok = FALSE)
   datlistfleetcolname <- switch(fleettype,
-    "catch" = "fleet",
-    "CPUE" = "index"
+    "catch" = c("fleet", "catch", "catch_se"),
+    "CPUE" = c("index", "obs", "se_log")
   )
   
   # Change data file
@@ -151,15 +151,19 @@ add_fleet <- function(datlist,
     "SD_Report" = 0
   )
   row.names(datlist[["CPUEinfo"]]) <- datlist[["fleetnames"]]
-  datlist[[fleettype]] <- datlist[[fleettype]] %>%
-  dplyr::bind_rows(
-    (data %>%
-      `colnames<-`(colnames(datlist[[fleettype]])[-3]) %>%
-      dplyr::mutate(!!datlistfleetcolname := 
-        ifelse(obs == -999, -1, 1) * datlist[["Nfleets"]]) %>%
-      dplyr::relocate(!!datlistfleetcolname, .after = "seas")
-    )
-  )
+  # Update column names of data
+  data.new <- data %>%
+    `colnames<-`(c("year", "seas", datlistfleetcolname[2:3])) %>%
+    dplyr::mutate(!!datlistfleetcolname[1] := 
+                    ifelse(obs == -999, -1, 1) * datlist[["Nfleets"]]) %>%
+    dplyr::relocate(!!datlistfleetcolname[1], .after = "seas")
+  
+  if(is.null(datlist[[fleettype]])) {
+    datlist[[fleettype]] <- data.new
+  } else {
+    datlist[[fleettype]] <- datlist[[fleettype]] %>%
+      dplyr::bind_rows(data.new)
+  }
   # Do not turn on Dirichlet-multinomial parameter for composition data
   datlist[["len_info"]][datlist[["Nfleets"]], ] <- c(-1, 0.001, 0, 0, 0, 0, 0.001)
   row.names(datlist[["len_info"]]) <- datlist[["fleetnames"]]
