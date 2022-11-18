@@ -155,7 +155,7 @@ add_fleet <- function(datlist,
   data.new <- data %>%
     `colnames<-`(c("year", "seas", datlistfleetcolname[2:3])) %>%
     dplyr::mutate(!!datlistfleetcolname[1] := 
-                    ifelse(obs == -999, -1, 1) * datlist[["Nfleets"]]) %>%
+                    ifelse(!!datlistfleetcolname[2] == -999, -1, 1) * datlist[["Nfleets"]]) %>%
     dplyr::relocate(!!datlistfleetcolname[1], .after = "seas")
   
   if(is.null(datlist[[fleettype]])) {
