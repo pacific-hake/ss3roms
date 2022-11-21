@@ -152,17 +152,17 @@ add_fleet <- function(datlist,
   )
   row.names(datlist[["CPUEinfo"]]) <- datlist[["fleetnames"]]
   # Update column names of data
-  data.new <- data %>%
-    `colnames<-`(c("year", "seas", datlistfleetcolname[2:3])) %>%
+  newdata <- data %>%
+    magrittr::set_colnames(c("year", "seas", datlistfleetcolname[2:3])) %>%
     dplyr::mutate(!!datlistfleetcolname[1] := 
                     ifelse(!!datlistfleetcolname[2] == -999, -1, 1) * datlist[["Nfleets"]]) %>%
     dplyr::relocate(!!datlistfleetcolname[1], .after = "seas")
   
   if(is.null(datlist[[fleettype]])) {
-    datlist[[fleettype]] <- data.new
+    datlist[[fleettype]] <- newdata
   } else {
     datlist[[fleettype]] <- datlist[[fleettype]] %>%
-      dplyr::bind_rows(data.new)
+      dplyr::bind_rows(newdata)
   }
   # Do not turn on Dirichlet-multinomial parameter for composition data
   datlist[["len_info"]][datlist[["Nfleets"]], ] <- c(-1, 0.001, 0, 0, 0, 0, 0.001)
@@ -174,18 +174,37 @@ add_fleet <- function(datlist,
   ctllist[["Nfleets"]] <- datlist[["Nfleets"]]
   ctllist[["fleetnames"]] <- datlist[["fleetnames"]]
   
-  ctllist[["Q_options"]][datlist[["Nsurveys"]], ] <-
-    ctllist[["Q_options"]][datlist[["Nsurveys"]] - 1, ]
-  ctllist[["Q_options"]][datlist[["Nsurveys"]], "fleet"] <- datlist[["Nfleets"]]
+  newQ_options <- data.frame(fleet = datlist[["Nfleets"]], link = 1,
+                             link_info = 0, extra_se = 1,
+                             biasadj = 0, float = 1) 
+  row.names(newQ_options) <- fleetname
+  if(is.null(ctllist[["Q_options"]])) {
+    ctllist[["Q_options"]] <- newQ_options
+  } else {
+    ctllist[["Q_options"]][datlist[["Nsurveys"]], ] <- dplyr::bind_rows(
+      ctllist[["Q_options"]], newQ_options
+    )
+  }
   row.names(ctllist[["Q_options"]]) <-
     datlist[["fleetnames"]][ctllist[["Q_options"]][["fleet"]]]
-  ctllist[["Q_parms"]][(datlist[["Nsurveys"]] * 2) - 1:0, ] <-
-    ctllist[["Q_parms"]][NROW(ctllist[["Q_parms"]]) - 1:0, ]
-  row.names(ctllist[["Q_parms"]])[NROW(ctllist[["Q_parms"]]) - 1:0] <- gsub(
-    "\\([0-9]+\\)", 
-    glue::glue('({datlist[["Nfleets"]]})'),
-    row.names(ctllist[["Q_parms"]])[1:2]
-  )
+  
+  newQ_parms <- data.frame(LO = c(-20, 0), HI = c(20, 2), INIT = c(0, .5), 
+                           PRIOR = 0, PR_SD = 99, PR_type = 0, 
+                           PHASE = c(-1,3), "env_var&link" = 0, dev_link = 0,
+                           dev_minyr = 0, dev_maxyr = 0, dev_PH = 0, 
+                           Block = 0, Block_Fxn = 0, check.names = FALSE) %>%
+    magrittr::set_rownames(
+      sapply(c('LnQ_base', 'Q_extraSD'), function(x)
+        glue::glue(x, '_{datlist[["fleetnames"]][datlist[["Nfleets"]]]}({datlist[["Nfleets"]]})')
+      )
+    )
+  
+  if(is.null(ctllist[["Q_parms"]])) {
+    ctllist[["Q_parms"]] <- newQ_parms
+  } else {
+    ctllist[["Q_parms"]] <- dplyr::bind_rows(ctllist$Q_parms, newQ_parms)
+  }
+
   # HARD-CODED Turn off length-based selectivity 
   ctllist[["size_selex_types"]][datlist[["Nfleets"]], ] <- rep(0, 4)
   row.names(ctllist[["size_selex_types"]]) <- datlist[["fleetnames"]]
@@ -204,7 +223,7 @@ add_fleet <- function(datlist,
       PRIOR = -1, PR_SD = 0.01, PR_type = 0,
       PHASE = -1,
       "env_var&link" = 0, dev_link = 0, dev_minyr = 0, dev_maxyr = 0, dev_PH = 0,
-      Block = 0, Block_Fxn = 0
+      Block = 0, Block_Fxn = 0, check.names = FALSE
     ) %>%
       magrittr::set_rownames(
         glue::glue('AgeSel_P_{1:2}_',
