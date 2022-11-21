@@ -190,7 +190,7 @@ add_fleet <- function(datlist,
   
   newQ_parms <- data.frame(LO = c(-20, 0), HI = c(20, 2), INIT = c(0, .5), 
                            PRIOR = 0, PR_SD = 99, PR_type = 0, 
-                           PHASE = c(-1,3), "env_var&link" = 0, dev_link = 0,
+                           PHASE = c(3,-1), "env_var&link" = 0, dev_link = 0,
                            dev_minyr = 0, dev_maxyr = 0, dev_PH = 0, 
                            Block = 0, Block_Fxn = 0, check.names = FALSE) %>%
     magrittr::set_rownames(
