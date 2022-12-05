@@ -176,18 +176,13 @@ add_fleet <- function(datlist,
   
   newQ_options <- data.frame(fleet = datlist[["Nfleets"]], link = 1,
                              link_info = 0, extra_se = 1,
-                             biasadj = 0, float = 1) 
-  row.names(newQ_options) <- fleetname
+                             biasadj = 0, float = 1) %>%
+  magrittr::set_rownames(fleetname)
   if(is.null(ctllist[["Q_options"]])) {
     ctllist[["Q_options"]] <- newQ_options
   } else {
-    ctllist[["Q_options"]][datlist[["Nsurveys"]], ] <- dplyr::bind_rows(
-      ctllist[["Q_options"]], newQ_options
-    )
+    ctllist[["Q_options"]][datlist[["Nsurveys"]], ] <- newQ_options
   }
-  row.names(ctllist[["Q_options"]]) <-
-    datlist[["fleetnames"]][ctllist[["Q_options"]][["fleet"]]]
-  
   newQ_parms <- data.frame(LO = c(-20, 0), HI = c(20, 2), INIT = c(0, .5), 
                            PRIOR = 0, PR_SD = 99, PR_type = 0, 
                            PHASE = c(3,-1), "env_var&link" = 0, dev_link = 0,
