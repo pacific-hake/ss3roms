@@ -1,0 +1,7 @@
+Note 1 Information: Max data length bin: 62  < max pop len bins: 78; so will accumulate larger pop len bins
+Warning 1 : no discard amount data for fleet 1  but retention parms have been defined 
+Warning 2 : no discard amount data for fleet 2  but retention parms have been defined 
+Warning 3 : 1st iteration warning: ssb(endyr)/ssb(styr)= 0.00197736; suggest start with larger R0 to get near 0.4; or use depletion fleet option
+Warning 4 : 1st iteration warning: catch logL > 50% total logL; check configuration; suggest start with larger R0
+Warning 5 : Main recdev biasadj is >2 times ratio of rmse to sigmaR
+ 5 warnings  and 1 note 

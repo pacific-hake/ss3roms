@@ -137,7 +137,7 @@ add_fleet <- function(datlist,
       # HARD-CODED surveytiming, area, and need_catch_mult
       "surveytiming" = 1,
       "area" = 1,
-      "units" = units,
+      "units" = 2,
       "need_catch_mult" = 0,
       "fleetname" = fleetname
     )
@@ -147,7 +147,7 @@ add_fleet <- function(datlist,
     "Fleet" = datlist[["Nfleets"]],
     "Units" = units,
     # HARD-CODED Errtype and SD_Report
-    "Errtype" = 0,
+    "Errtype" = -1,
     "SD_Report" = 0
   )
   row.names(datlist[["CPUEinfo"]]) <- datlist[["fleetnames"]]
@@ -173,7 +173,6 @@ add_fleet <- function(datlist,
   # Alter the control file to add selectivity parameters for new survey
   ctllist[["Nfleets"]] <- datlist[["Nfleets"]]
   ctllist[["fleetnames"]] <- datlist[["fleetnames"]]
-  
   newQ_options <- data.frame(fleet = datlist[["Nfleets"]], link = 1,
                              link_info = 0, extra_se = 1,
                              biasadj = 0, float = 1) %>%
