@@ -6,14 +6,11 @@ library(ss3sim)
 library(here)
 source('R/add_fleet.R')
 
-# set seed
-set.seed(3259087)
-
 # set ss3 executable location
 if(Sys.info()['sysname'] == 'Linux'){
   exe_loc = here('inst/extdata/bin/Linux64/ss3')
 } else {
-  exe_loc = here('inst/extdata/bin/Windows64/ss3.exe')
+  exe_loc = here('inst/extdata/bin/Windows64/ss.exe')
 }
 
 # Adjust cod operating model ----------------------------------------------
@@ -31,12 +28,14 @@ cod$ctl$Q_options <- cod$ctl$Q_options['Survey',]
 cod$ctl$Q_parms <- cod$ctl$Q_parms[grep('Survey', rownames(cod$ctl$Q_parms)),]
 cod$dat$CPUE <- filter(cod$dat$CPUE, index == which(cod$dat$fleetnames == 'Survey'))
 
-# extend forecast
-cod$fore$Nforecastyrs <- 12
+# extend number of years (will be forecast in the EM)
+cod$dat$endyr <- 112
 
 # move selectivity curve right to give index a shot
 cod$ctl$size_selex_parms$INIT[grep('1_Fishery', rownames(cod$ctl$size_selex_parms))] <- 100
 cod$ctl$size_selex_parms$INIT[grep('1_Survey', rownames(cod$ctl$size_selex_parms))] <- 75
+cod$ctl$size_selex_parms$HI[grep('P_1', rownames(cod$ctl$size_selex_parms))] <- 150
+cod$ctl$size_selex_parms$LO[grep('P_1', rownames(cod$ctl$size_selex_parms))] <- 20
 
 # considered decreasing steepness, but popn is not depleted so doesn't matter
 
@@ -59,11 +58,18 @@ ss3sim::create_em(dir_in = 'inst/extdata/models/Cod/OM',
 
 # try sample sizes from petrale?
 df <- setup_scenarios_defaults()
+
+# rec index
 df$si.years.3 <- '70:100'
 df$si.sds_obs.3 <- 0.1
 df$si.seas.3 <- 1
-df$om_dir = 'inst/extdata/models/Cod/OM'
-df$em_dir = 'inst/extdata/models/Cod/EM'
+
+# last 12 yrs of data are forecast
+df$ce.forecast_num <- 12
+
+# model location, etc.
+df$om_dir <- 'inst/extdata/models/Cod/OM'
+df$em_dir <- 'inst/extdata/models/Cod/EM'
 df$bias_adjust <- FALSE
 
 tictoc::tic()
@@ -71,7 +77,8 @@ ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
 nsim <- 50
-sim_dir <- 'sims'
+sim_dir <- 'test'
+set.seed(3259087)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
                      parallel = TRUE, parallel_iterations = TRUE,
