@@ -27,3 +27,4 @@ inst/extdata/models/retrospectives/*
 !inst/extdata/models/retrospectives/*/wtatage.ss
 *.png
 *.exe
+sims/*/*.csv
