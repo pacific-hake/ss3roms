@@ -1,14 +1,29 @@
-library(furrr)
+library(dplyr)
+library(doParallel)
+library(future)
 library(r4ss)
+library(ss3sim)
+library(here)
+source('R/add_fleet.R')
+
+# set seed
 set.seed(3259087)
 
+# set ss3 executable location
+if(Sys.info()['sysname'] == 'Linux'){
+  exe_loc = here('inst/extdata/bin/Linux64/ss3')
+} else {
+  exe_loc = here('inst/extdata/bin/Windows64/ss3.exe')
+}
 
 # Adjust cod operating model ----------------------------------------------
 
 cod.loc <- system.file(file.path("extdata", "models"), package = "ss3sim")
 
+dir.create('inst/extdata/models/Cod')
 file.copy(cod.loc, 'inst/extdata/models/Cod', recursive = TRUE)
-
+file.rename(from = 'inst/extdata/models/Cod/models',
+            to = 'inst/extdata/models/Cod/original')
 cod <- SS_read('inst/extdata/models/Cod/original/cod-om')
 
 # get rid of CPUE data from fishery. this is weird. and it breaks add_fleet function.
@@ -34,9 +49,9 @@ cod.env$ctllist$Q_parms <- cod.env$ctllist$Q_parms[-grep('extraSD', rownames(cod
 
 cod$dat <- cod.env$datlist
 cod$ctl <- cod.env$ctllist
-SS_write(cod, 'inst/extdata/models/cod/OM', overwrite = TRUE)
-ss3sim::create_em(dir_in = 'inst/extdata/models/cod/OM', 
-                  dir_out = 'inst/extdata/models/cod/EM')
+SS_write(cod, 'inst/extdata/models/Cod/OM', overwrite = TRUE)
+ss3sim::create_em(dir_in = 'inst/extdata/models/Cod/OM', 
+                  dir_out = 'inst/extdata/models/Cod/EM')
 # run('inst/extdata/models/cod/OM', exe = here('inst/extdata/models/ss.exe'), extras = '-nohess', show_in_console = TRUE)
 
 
@@ -47,25 +62,28 @@ df <- setup_scenarios_defaults()
 df$si.years.3 <- '70:100'
 df$si.sds_obs.3 <- 0.1
 df$si.seas.3 <- 1
-df$om_dir = 'inst/extdata/models/cod/OM'
-df$em_dir = 'inst/extdata/models/cod/EM'
+df$om_dir = 'inst/extdata/models/Cod/OM'
+df$em_dir = 'inst/extdata/models/Cod/EM'
 df$bias_adjust <- FALSE
 
-cl <- makeCluster(3)
+tictoc::tic()
+ncore <- parallelly::availableCores()
+cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
 nsim <- 50
-scname <- run_ss3sim(iterations = 1, simdf = df, extras = '-nohess', 
+sim_dir <- 'sims'
+
+scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
                      parallel = TRUE, parallel_iterations = TRUE,
-                     scenarios = file.path('sims', df$si.sds_obs.3))
+                     scenarios = file.path(sim_dir, df$si.sds_obs.3))
 stopCluster(cl)
 
 rec_flt_ind <- 3
-sim_dir <- 'sims'
 
 # Run EM without index ----------------------------------------------------
 
 dir.create(file.path(sim_dir, 'no_ind'))
-future::plan(future::multisession)
+plan(multisession, workers = ncore-1)
 
 furrr::future_walk(1:nsim, \(iter) {
   # copy files, read in EM
@@ -82,7 +100,7 @@ furrr::future_walk(1:nsim, \(iter) {
   # write model and run
   SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
   run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
-      exe = here('inst/extdata/bin/Windows64/ss.exe'),
+      exe = exe_loc,
       extras = '-nohess', skipfinished = FALSE)
 })
 
@@ -119,7 +137,7 @@ furrr::future_walk(1:nsim, \(iter) {
               recursive = TRUE, overwrite = TRUE)
     SS_write(mod, file.path(sim_dir, sd, iter, 'em'), overwrite = TRUE)
     run(dir = file.path(sim_dir, sd, iter, 'em'),
-        exe = here('inst/extdata/bin/Windows64/ss.exe'),
+        exe = exe_loc,
         extras = '-nohess', skipfinished = FALSE)
   })
 }, .options = furrr_options(seed = 5890238))
@@ -127,3 +145,4 @@ tictoc::toc()
 
 sim_res <- get_results_all(directory = sim_dir,
                            overwrite_files = TRUE)
+tictoc::toc()
