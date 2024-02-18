@@ -28,3 +28,6 @@ inst/extdata/models/retrospectives/*
 *.png
 *.exe
 sims/*/*.csv
+
+# ss3 files
+sims/*/*

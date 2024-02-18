@@ -77,8 +77,8 @@ ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
 nsim <- 50
-sim_dir <- 'test'
-set.seed(3259087)
+sim_dir <- 'sims'
+set.seed(52890)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
                      parallel = TRUE, parallel_iterations = TRUE,
@@ -147,9 +147,9 @@ furrr::future_walk(1:nsim, \(iter) {
         exe = exe_loc,
         extras = '-nohess', skipfinished = FALSE)
   })
-}, .options = furrr_options(seed = 5890238))
-tictoc::toc()
+}, .options = furrr::furrr_options(seed = 5890238))
 
 sim_res <- get_results_all(directory = sim_dir,
                            overwrite_files = TRUE)
+
 tictoc::toc()
