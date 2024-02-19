@@ -1,3 +1,20 @@
+library(ggplot2)
+
+sim_res$ts |> 
+  as_tibble() |>
+  filter(year >= 100) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = SpawnBio, 
+                     id_cols = c(iteration, scenario, year)) |>
+  mutate(are = abs((em-om)/om)) |> 
+  group_by(scenario, year) |>
+  summarise(low.low = quantile(are, 0.025),
+            low = quantile(are, 0.25),
+            mid = mean(are), 
+            high = quantile (are, 0.75),
+            high.high = quantile(are, 0.975)) |>
+  ggplot() +
+ # geom_linerange(aes(x = year, ymin = low.low, ymax = high.high, col = scenario)) +
+  geom_line(aes(x = year, y = mid, col = scenario))
 
 library(future)
 

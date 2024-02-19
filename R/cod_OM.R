@@ -122,7 +122,7 @@ furrr::future_walk(1:nsim, \(iter) {
 # Run EM under different index SDs ----------------------------------------
 
 # 0.1, 0.35, 0.7, 1.5, 10 seems like good range
-sd_seq <- c(0.35, 0.7, 1.5, 10)
+sd_seq <- 0.05 #c(0.35, 0.7, 1.5, 10)
 purrr::walk(sd_seq, \(sd) dir.create(file.path(sim_dir, sd)))
 
 furrr::future_walk(1:nsim, \(iter) {
