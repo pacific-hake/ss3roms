@@ -49,6 +49,8 @@ cod.env$ctllist$Q_parms <- cod.env$ctllist$Q_parms[-grep('extraSD', rownames(cod
 cod$dat <- cod.env$datlist
 cod$ctl <- cod.env$ctllist
 SS_write(cod, 'inst/extdata/models/Cod/OM', overwrite = TRUE)
+# get rid of the stupid par file, I do not like these changes to r4ss!
+file.remove('inst/extdata/models/Cod/OM/ss3.par')
 ss3sim::create_em(dir_in = 'inst/extdata/models/Cod/OM', 
                   dir_out = 'inst/extdata/models/Cod/EM')
 # run('inst/extdata/models/cod/OM', exe = here('inst/extdata/models/ss.exe'), extras = '-nohess', show_in_console = TRUE)
@@ -78,12 +80,12 @@ tictoc::tic()
 ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
-nsim <- 1
+nsim <- 50
 sim_dir <- 'sims'
 set.seed(52890)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
-                     # parallel = TRUE, parallel_iterations = TRUE,
+                     parallel = TRUE, parallel_iterations = TRUE,
                      scenarios = file.path(sim_dir, df$si.sds_obs.3))
 stopCluster(cl)
 
@@ -108,31 +110,37 @@ furrr::future_walk(1:nsim, \(iter) {
   
   # write model and run
   SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
+  # bad r4ss updates. instead found old version of r4ss that worked.
+  # par_file <- grep('par', list.files(file.path(sim_dir, 'no_ind', iter, 'em')), value = TRUE)
+  # file.remove(file.path(sim_dir, sd, iter, 'em', par_file))
+  # run
   run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
-      exe = exe_loc,
+      exe = exe_loc, verbose = FALSE,
       extras = '-nohess', skipfinished = FALSE)
 })
 
 # Run EM under different index SDs ----------------------------------------
 
 # 0.1, 0.35, 0.7, 1.5, 10 seems like good range
-sd_seq <- c(0.35, 0.7)#, 1.5, 10)
+sd_seq <- c(0.35, 0.7, 1.5, 10)
 purrr::walk(sd_seq, \(sd) dir.create(file.path(sim_dir, sd)))
 
 furrr::future_walk(1:nsim, \(iter) {
   mod <- SS_read(file.path(sim_dir, df$si.sds_obs.3, iter, 'em'))
-
-  # First replace survey obs with expected values
-  om_res <- r4ss::SS_output(file.path(sim_dir, df$si.sds_obs.3, iter, "om"),
-                            forecast = FALSE, warn = FALSE, covar = FALSE,
-                            readwt = FALSE, verbose = FALSE,
-                            printstats = FALSE)
   rec_yrs <- mod$dat$CPUE$year[mod$dat$CPUE$index == rec_flt_ind]
-  rec_devs <- dplyr::filter(om_res$recruit, Yr %in% rec_yrs) |>
-    dplyr::pull(dev)
-  mod$dat$CPUE$obs[mod$dat$CPUE$year %in% rec_yrs &
-                     mod$dat$CPUE$index == rec_flt_ind] <- rec_devs
   
+  # First replace survey obs with expected values if needed.
+  if(any(is.nan(mod$dat$CPUE$obs))) {
+    warning('replacing NaNs in index with rec dev. SS3 may not behave as expected.')
+    om_res <- r4ss::SS_output(file.path(sim_dir, df$si.sds_obs.3, iter, "om"),
+                              forecast = FALSE, warn = FALSE, covar = FALSE,
+                              readwt = FALSE, verbose = FALSE,
+                              printstats = FALSE)
+    rec_devs <- dplyr::filter(om_res$recruit, Yr %in% rec_yrs) |>
+      dplyr::pull(dev)
+    mod$dat$CPUE$obs[mod$dat$CPUE$year %in% rec_yrs &
+                       mod$dat$CPUE$index == rec_flt_ind] <- rec_devs
+  }
   # now sample survey index across new SDs
   purrr::walk(sd_seq, \(sd) {
     tmp_dat <- sample_index(mod$dat, fleets = rec_flt_ind, 
@@ -146,13 +154,25 @@ furrr::future_walk(1:nsim, \(iter) {
               to = file.path(sim_dir, sd, iter), 
               recursive = TRUE, overwrite = TRUE)
     SS_write(mod, file.path(sim_dir, sd, iter, 'em'), overwrite = TRUE)
+    # bad r4ss updates
+    par_file <- grep('par', list.files(file.path(sim_dir, sd, iter, 'em')), value = TRUE)
+    file.remove(file.path(sim_dir, sd, iter, 'em', par_file))
+    # run
     run(dir = file.path(sim_dir, sd, iter, 'em'),
-        exe = exe_loc,
+        exe = exe_loc, verbose = FALSE,
         extras = '-nohess', skipfinished = FALSE)
   })
 }, .options = furrr::furrr_options(seed = 5890238))
+tictoc::toc()
 
+
+# just in case r4ss fucked up again
+# purrr::walk(list.files('sims'), \(sim) {
+#   file.remove(paste('sims', sim, 1:50, 'em/ss3.par', sep = '/'))
+#   file.remove(paste('sims', sim, 1:50, 'om/ss3.par', sep = '/'))
+# })
+
+tictoc::tic()
 sim_res <- get_results_all(directory = sim_dir,
                            overwrite_files = TRUE)
-
 tictoc::toc()
