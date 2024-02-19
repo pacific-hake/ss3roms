@@ -8,9 +8,9 @@ source('R/add_fleet.R')
 
 # set ss3 executable location
 if(Sys.info()['sysname'] == 'Linux'){
-  exe_loc = here('inst/extdata/bin/Linux64/ss3')
+  exe_loc = system.file(file.path("bin", "Linux64", "ss3"), package = "ss3sim")
 } else {
-  exe_loc = here('inst/extdata/bin/Windows64/ss.exe')
+  exe_loc = system.file(file.path("bin", "Windows64", "ss3.exe"), package = "ss3sim")
 }
 
 # Adjust cod operating model ----------------------------------------------
@@ -66,6 +66,8 @@ df$si.seas.3 <- 1
 
 # last 12 yrs of data are forecast
 df$ce.forecast_num <- 12
+df$cf.years.1 <- '26:112'
+df$cf.fvals.1 <- 'rep(0.1052, 87)'
 
 # model location, etc.
 df$om_dir <- 'inst/extdata/models/Cod/OM'
@@ -76,12 +78,12 @@ tictoc::tic()
 ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
-nsim <- 50
+nsim <- 1
 sim_dir <- 'sims'
 set.seed(52890)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
-                     parallel = TRUE, parallel_iterations = TRUE,
+                     # parallel = TRUE, parallel_iterations = TRUE,
                      scenarios = file.path(sim_dir, df$si.sds_obs.3))
 stopCluster(cl)
 
@@ -114,7 +116,7 @@ furrr::future_walk(1:nsim, \(iter) {
 # Run EM under different index SDs ----------------------------------------
 
 # 0.1, 0.35, 0.7, 1.5, 10 seems like good range
-sd_seq <- c(0.35, 0.7, 1.5, 10)
+sd_seq <- c(0.35, 0.7)#, 1.5, 10)
 purrr::walk(sd_seq, \(sd) dir.create(file.path(sim_dir, sd)))
 
 furrr::future_walk(1:nsim, \(iter) {
@@ -138,9 +140,10 @@ furrr::future_walk(1:nsim, \(iter) {
                             sds_obs = list(sd))
     mod$dat$CPUE[mod$dat$CPUE$index == rec_flt_ind,] <- tmp_dat$CPUE
     
-    # copy OM (and EM, but will overwrite), write model and run
-    file.copy(from = file.path(sim_dir, df$si.sds_obs.3, iter),
-              to = file.path(sim_dir, sd), 
+    # copy OM, write model and run
+    dir.create(file.path(sim_dir, sd, iter))
+    file.copy(from = file.path(sim_dir, df$si.sds_obs.3, iter, 'om'),
+              to = file.path(sim_dir, sd, iter), 
               recursive = TRUE, overwrite = TRUE)
     SS_write(mod, file.path(sim_dir, sd, iter, 'em'), overwrite = TRUE)
     run(dir = file.path(sim_dir, sd, iter, 'em'),
