@@ -52,8 +52,6 @@ cod.env$ctllist$Q_parms['LnQ_base_env(3)', 'INIT'] <- 1
 cod$dat <- cod.env$datlist
 cod$ctl <- cod.env$ctllist
 SS_write(cod, 'inst/extdata/models/Cod/OM', overwrite = TRUE)
-# get rid of the stupid par file, I do not like these changes to r4ss!
-file.remove('inst/extdata/models/Cod/OM/ss3.par')
 ss3sim::create_em(dir_in = 'inst/extdata/models/Cod/OM', 
                   dir_out = 'inst/extdata/models/Cod/EM')
 # run('inst/extdata/models/cod/OM', exe = here('inst/extdata/models/ss.exe'), extras = '-nohess', show_in_console = TRUE)
@@ -113,10 +111,6 @@ furrr::future_walk(1:nsim, \(iter) {
   
   # write model and run
   SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
-  # bad r4ss updates. instead found old version of r4ss that worked.
-  # par_file <- grep('par', list.files(file.path(sim_dir, 'no_ind', iter, 'em')), value = TRUE)
-  # file.remove(file.path(sim_dir, sd, iter, 'em', par_file))
-  # run
   run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
       exe = exe_loc, verbose = FALSE,
       extras = '-nohess', skipfinished = FALSE)
@@ -125,7 +119,7 @@ furrr::future_walk(1:nsim, \(iter) {
 # Run EM under different index SDs ----------------------------------------
 
 # 0.1, 0.35, 0.7, 1.5, 10 seems like good range
-sd_seq <- 0.05 #c(0.35, 0.7, 1.5, 10)
+sd_seq <- c(0.05, 0.35, 0.7, 1.5, 10)
 purrr::walk(sd_seq, \(sd) dir.create(file.path(sim_dir, sd)))
 
 furrr::future_walk(1:nsim, \(iter) {
@@ -157,23 +151,12 @@ furrr::future_walk(1:nsim, \(iter) {
               to = file.path(sim_dir, sd, iter), 
               recursive = TRUE, overwrite = TRUE)
     SS_write(mod, file.path(sim_dir, sd, iter, 'em'), overwrite = TRUE)
-    # bad r4ss updates
-    par_file <- grep('par', list.files(file.path(sim_dir, sd, iter, 'em')), value = TRUE)
-    file.remove(file.path(sim_dir, sd, iter, 'em', par_file))
-    # run
     run(dir = file.path(sim_dir, sd, iter, 'em'),
         exe = exe_loc, verbose = FALSE,
         extras = '-nohess', skipfinished = FALSE)
   })
 }, .options = furrr::furrr_options(seed = 5890238))
 tictoc::toc()
-
-
-# just in case r4ss fucked up again
-# purrr::walk(list.files('sims'), \(sim) {
-#   file.remove(paste('sims', sim, 1:50, 'em/ss3.par', sep = '/'))
-#   file.remove(paste('sims', sim, 1:50, 'om/ss3.par', sep = '/'))
-# })
 
 tictoc::tic()
 sim_res <- get_results_all(directory = sim_dir,
