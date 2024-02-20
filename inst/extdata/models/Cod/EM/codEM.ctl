@@ -1,6 +1,6 @@
 #V3.30
 #C file created using the SS_writectl function in the R package r4ss
-#C file write time: 2024-02-19 03:07:43.279354
+#C file write time: 2024-02-20 11:15:35.348364
 #
 0 # 0 means do not read wtatage.ss; 1 means read and usewtatage.ss and also read and use growth parameters
 1 #_N_Growth_Patterns
@@ -118,12 +118,12 @@
 #_Q_setup for fleets with cpue or survey data
 #_fleet	link	link_info	extra_se	biasadj	float  #  fleetname
     2	1	0	0	0	0	#_Survey    
-    3	1	0	0	0	1	#_env       
+    3	1	0	0	0	0	#_env       
 -9999	0	0	0	0	0	#_terminator
 #_Q_parms(if_any);Qunits_are_ln(q)
 #_LO	HI	INIT	PRIOR	PR_SD	PR_type	PHASE	env-var	use_dev	dev_mnyr	dev_mxyr	dev_PH	Block	Blk_Fxn  #  parm_name
--20	20	0	0	99	0	-5	0	0	0	0	0	0	0	#_LnQ_base_Survey(2)
--20	20	0	0	99	0	-1	0	0	0	0	0	0	0	#_LnQ_base_env(3)   
+  -20	20	0	0	99	0	-5	0	0	0	0	0	0	0	#_LnQ_base_Survey(2)
+0.001	20	1	0	99	0	-1	0	0	0	0	0	0	0	#_LnQ_base_env(3)   
 #_no timevary Q parameters
 #
 #_size_selex_patterns

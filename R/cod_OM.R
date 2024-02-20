@@ -15,12 +15,13 @@ if(Sys.info()['sysname'] == 'Linux'){
 
 # Adjust cod operating model ----------------------------------------------
 
-cod.loc <- system.file(file.path("extdata", "models"), package = "ss3sim")
+# cod.loc <- system.file(file.path("extdata", "models"), package = "ss3sim")
+# 
+# dir.create('inst/extdata/models/Cod')
+# file.copy(cod.loc, 'inst/extdata/models/Cod', recursive = TRUE)
+# file.rename(from = 'inst/extdata/models/Cod/models',
+#             to = 'inst/extdata/models/Cod/original')
 
-dir.create('inst/extdata/models/Cod')
-file.copy(cod.loc, 'inst/extdata/models/Cod', recursive = TRUE)
-file.rename(from = 'inst/extdata/models/Cod/models',
-            to = 'inst/extdata/models/Cod/original')
 cod <- SS_read('inst/extdata/models/Cod/original/cod-om')
 
 # get rid of CPUE data from fishery. this is weird. and it breaks add_fleet function.
@@ -43,8 +44,10 @@ cod.env <- add_fleet(datlist = cod$dat, ctllist = cod$ctl,
                      data = data.frame(matrix(1, nrow = 1, ncol = 4)), 
                      fleettype = 'CPUE', fleetname = 'env', units = 36)
 cod.env$ctllist$Q_options['env','extra_se'] <- 0
-# cod.env$ctllist$Q_options['env','float'] <- 0
+cod.env$ctllist$Q_options['env','float'] <- 0
 cod.env$ctllist$Q_parms <- cod.env$ctllist$Q_parms[-grep('extraSD', rownames(cod.env$ctllist$Q_parms)),]
+cod.env$ctllist$Q_parms['LnQ_base_env(3)', 'LO'] <- 0.001 # this is actually q for index type 36, and must be >0
+cod.env$ctllist$Q_parms['LnQ_base_env(3)', 'INIT'] <- 1
 
 cod$dat <- cod.env$datlist
 cod$ctl <- cod.env$ctllist
