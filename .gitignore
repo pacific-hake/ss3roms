@@ -31,3 +31,4 @@ sims/*/*.csv
 
 # ss3 files
 sims/*/*
+sims_low_n/*/*

@@ -59,9 +59,14 @@ ss3sim::create_em(dir_in = 'inst/extdata/models/Cod/OM',
 
 # simulate OM and 1st EM scenario -----------------------------------------
 
-# try sample sizes from petrale?
 df <- setup_scenarios_defaults()
 
+# decrease comp sample sizes
+df$sl.Nsamp.1 <- 25
+df$sl.Nsamp.2 <- 50
+df$sa.Nsamp.1 <- 25
+df$sa.Nsamp.2 <- 50
+  
 # rec index
 df$si.years.3 <- '70:100'
 df$si.sds_obs.3 <- 0.1
@@ -82,7 +87,7 @@ ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
 nsim <- 50
-sim_dir <- 'sims'
+sim_dir <- 'sims_low_n'
 set.seed(52890)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
@@ -116,20 +121,24 @@ furrr::future_walk(1:nsim, \(iter) {
       extras = '-nohess', skipfinished = FALSE)
 })
 
+
 # Run EM under different index SDs ----------------------------------------
 
-# 0.1, 0.35, 0.7, 1.5, 10 seems like good range
-sd_seq <- c(0.05, 0.35, 0.7, 1.5, 10)
+# based on earlier simulations, > 0.5 all look the same
+# want more contrast at lower values.
+file.rename(from = file.path(sim_dir, '0.1'),
+            to = file.path(sim_dir, 'base'))
+sd_seq <- c(0.05, 0.1, 0.2, 0.3, 0.5)
 purrr::walk(sd_seq, \(sd) dir.create(file.path(sim_dir, sd)))
 
 furrr::future_walk(1:nsim, \(iter) {
-  mod <- SS_read(file.path(sim_dir, df$si.sds_obs.3, iter, 'em'))
+  mod <- SS_read(file.path(sim_dir, 'base', iter, 'em'))
   rec_yrs <- mod$dat$CPUE$year[mod$dat$CPUE$index == rec_flt_ind]
   
   # First replace survey obs with expected values if needed.
   if(any(is.nan(mod$dat$CPUE$obs))) {
     warning('replacing NaNs in index with rec dev. SS3 may not behave as expected.')
-    om_res <- r4ss::SS_output(file.path(sim_dir, df$si.sds_obs.3, iter, "om"),
+    om_res <- r4ss::SS_output(file.path(sim_dir, 'base', iter, "om"),
                               forecast = FALSE, warn = FALSE, covar = FALSE,
                               readwt = FALSE, verbose = FALSE,
                               printstats = FALSE)
@@ -138,8 +147,12 @@ furrr::future_walk(1:nsim, \(iter) {
     mod$dat$CPUE$obs[mod$dat$CPUE$year %in% rec_yrs &
                        mod$dat$CPUE$index == rec_flt_ind] <- rec_devs
   }
+  
+  seed <- sample(100000000, 1)
   # now sample survey index across new SDs
   purrr::walk(sd_seq, \(sd) {
+    # ensure same seed for all SEs per iteration
+    set.seed(seed)
     tmp_dat <- sample_index(mod$dat, fleets = rec_flt_ind, 
                             years = list(rec_yrs), 
                             sds_obs = list(sd))
@@ -147,7 +160,7 @@ furrr::future_walk(1:nsim, \(iter) {
     
     # copy OM, write model and run
     dir.create(file.path(sim_dir, sd, iter))
-    file.copy(from = file.path(sim_dir, df$si.sds_obs.3, iter, 'om'),
+    file.copy(from = file.path(sim_dir, 'base', iter, 'om'),
               to = file.path(sim_dir, sd, iter), 
               recursive = TRUE, overwrite = TRUE)
     SS_write(mod, file.path(sim_dir, sd, iter, 'em'), overwrite = TRUE)
@@ -156,9 +169,31 @@ furrr::future_walk(1:nsim, \(iter) {
         extras = '-nohess', skipfinished = FALSE)
   })
 }, .options = furrr::furrr_options(seed = 5890238))
+
+# 0.1 index but only last 3 yrs ----------------------------------------------------
+
+dir.create(file.path(sim_dir, '0.1_end_yrs_only'))
+
+furrr::future_walk(1:nsim, \(iter) {
+  # copy files, read in EM
+  file.copy(from = file.path(sim_dir, '0.1', iter),
+            to = file.path(sim_dir, '0.1_end_yrs_only'), 
+            recursive = TRUE, overwrite = TRUE)
+  mod <- SS_read(file.path(sim_dir, '0.1_end_yrs_only', iter, 'em'))
+  
+  # remove index
+  mod$dat$CPUE <- filter(mod$dat$CPUE, year > 97 | index == 2)
+  
+  # write model and run
+  SS_write(mod, file.path(sim_dir, '0.1_end_yrs_only', iter, 'em'), overwrite = TRUE)
+  run(dir = file.path(sim_dir, '0.1_end_yrs_only', iter, 'em'),
+      exe = exe_loc, verbose = FALSE,
+      extras = '-nohess', skipfinished = FALSE)
+})
+
 tictoc::toc()
 
 tictoc::tic()
-sim_res <- get_results_all(directory = sim_dir,
+sim_res <- get_results_all(directory = sim_dir, user_scenarios = c(0.05, 0.1, 0.2, 0.3, 0.5, 'no_ind'),
                            overwrite_files = TRUE)
 tictoc::toc()
