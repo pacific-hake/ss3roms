@@ -62,10 +62,10 @@ ss3sim::create_em(dir_in = 'inst/extdata/models/Cod/OM',
 df <- setup_scenarios_defaults()
 
 # decrease comp sample sizes
-df$sl.Nsamp.1 <- 25
-df$sl.Nsamp.2 <- 50
-df$sa.Nsamp.1 <- 25
-df$sa.Nsamp.2 <- 50
+# df$sl.Nsamp.1 <- 25
+# df$sl.Nsamp.2 <- 50
+# df$sa.Nsamp.1 <- 25
+# df$sa.Nsamp.2 <- 50
   
 # rec index
 df$si.years.3 <- '70:100'
@@ -80,14 +80,14 @@ df$cf.fvals.1 <- 'rep(0.1052, 87)'
 # model location, etc.
 df$om_dir <- 'inst/extdata/models/Cod/OM'
 df$em_dir <- 'inst/extdata/models/Cod/EM'
-df$bias_adjust <- FALSE
+df$bias_adjust <- TRUE
 
 tictoc::tic()
 ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
 nsim <- 50
-sim_dir <- 'sims_low_n'
+sim_dir <- 'bias_adjust'
 set.seed(52890)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
@@ -118,7 +118,17 @@ furrr::future_walk(1:nsim, \(iter) {
   SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
   run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
       exe = exe_loc, verbose = FALSE,
-      extras = '-nohess', skipfinished = FALSE)
+      # extras = '-nohess', # conducting bias adjustment 
+      skipfinished = FALSE)
+  bias <- ss3sim:::calculate_bias(
+    dir = file.path(sim_dir, 'no_ind', iter, 'em'),
+    ctl_file_in = "em.ctl"
+  )
+  run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
+      exe = exe_loc, verbose = FALSE,
+      extras = '-nohess', 
+      skipfinished = FALSE)
+  
 })
 
 
@@ -166,7 +176,17 @@ furrr::future_walk(1:nsim, \(iter) {
     SS_write(mod, file.path(sim_dir, sd, iter, 'em'), overwrite = TRUE)
     run(dir = file.path(sim_dir, sd, iter, 'em'),
         exe = exe_loc, verbose = FALSE,
-        extras = '-nohess', skipfinished = FALSE)
+        # extras = '-nohess', 
+        skipfinished = FALSE)
+    bias <- ss3sim:::calculate_bias(
+      dir = file.path(sim_dir, sd, iter, 'em'),
+      ctl_file_in = "em.ctl"
+    )
+    run(dir = file.path(sim_dir, sd, iter, 'em'),
+        exe = exe_loc, verbose = FALSE,
+        extras = '-nohess', 
+        skipfinished = FALSE)
+    
   })
 }, .options = furrr::furrr_options(seed = 5890238))
 

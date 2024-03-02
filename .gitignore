@@ -32,3 +32,5 @@ sims/*/*.csv
 # ss3 files
 sims/*/*
 sims_low_n/*/*
+bias_adjust/*/*
+!bias_adjust/*/1
