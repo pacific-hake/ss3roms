@@ -1,4 +1,4 @@
- CPUE  0 -29.5051 229.744
+ CPUE  0 -29.5051 0
  LEN   994.789 382.236 0
  AGE   1000.64 326.68 0
  EQUL  0 0 0
@@ -6,7 +6,7 @@
  Parm 0
  F_ballpark 0
 Catch  2.97494e-17 0 0
- -log(L): 2843.56  Spbio: 4.34793e+09 2.2138e+09
+ -log(L): 2613.82  Spbio: 4.34793e+09 2.2138e+09
 
 Year Spbio Recruitment
 Virg 4.34793e+09 1.40762e+08

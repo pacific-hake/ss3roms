@@ -1,7 +1,7 @@
 #C forecast file written by R function SS_writeforecast
 #C rerun model to get more complete formatting in forecast.ss_new
 #C should work with SS version: 3.3
-#C file write time: 2024-02-29 21:41:00.663752
+#C file write time: 2024-03-02 04:38:01.221488
 #
 1 #_benchmarks
 2 #_MSY
@@ -25,7 +25,7 @@
 0 #_fcast_rec_option
 1 #_fcast_rec_val
 0 #_Fcast_loop_control_5
-101 #_FirstYear_for_caps_and_allocations
+113 #_FirstYear_for_caps_and_allocations
 0 #_stddev_of_log_catch_ratio
 0 #_Do_West_Coast_gfish_rebuilder_output
 100 #_Ydecl
@@ -39,7 +39,20 @@
 -9999 -1
 # enter list of fleet number and allocation group assignment, if any; terminate with fleet=-9999
 -9999 -1
-2 #_InputBasis
+99 #_InputBasis
+ #_Year Seas Fleet Catch or F
+    101    1     1     0.1052
+    102    1     1     0.1052
+    103    1     1     0.1052
+    104    1     1     0.1052
+    105    1     1     0.1052
+    106    1     1     0.1052
+    107    1     1     0.1052
+    108    1     1     0.1052
+    109    1     1     0.1052
+    110    1     1     0.1052
+    111    1     1     0.1052
+    112    1     1     0.1052
 -9999 0 0 0
 #
 999 # verify end of input 

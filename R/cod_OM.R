@@ -87,8 +87,8 @@ tictoc::tic()
 ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
-nsim <- 2
-sim_dir <- 'sim_test'
+nsim <- 50
+sim_dir <- 'bias_adjust'
 set.seed(52890)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 

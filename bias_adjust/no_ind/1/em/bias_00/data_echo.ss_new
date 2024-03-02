@@ -5,7 +5,7 @@
 #_User_info_available_at:https://vlab.noaa.gov/group/stock-synthesis
 #_Source_code_at:_https://github.com/nmfs-ost/ss3-source-code
 
-#_Start_time: Thu Feb 29 21:28:23 2024
+#_Start_time: Sat Mar  2 04:40:37 2024
 #_echo_input_data
 #C North Sea/Skagerrak/Eastern Channel Cod
 #V3.30.22.1;_safe;_compile_date:_Jan 30 2024;_Stock_Synthesis_by_Richard_Methot_(NOAA)_using_ADMB_13.1
@@ -148,37 +148,6 @@
 96 1 2 2.66047e+09 0.1 #_ Survey
 98 1 2 2.27376e+09 0.1 #_ Survey
 100 1 2 2.22364e+09 0.1 #_ Survey
-70 1 3 -0.16131 0.1 #_ env
-71 1 3 0.895229 0.1 #_ env
-72 1 3 -0.861887 0.1 #_ env
-73 1 3 0.615669 0.1 #_ env
-74 1 3 -0.180228 0.1 #_ env
-75 1 3 -0.671951 0.1 #_ env
-76 1 3 -0.306275 0.1 #_ env
-77 1 3 0.0160864 0.1 #_ env
-78 1 3 -0.200464 0.1 #_ env
-79 1 3 -0.384489 0.1 #_ env
-80 1 3 0.00867648 0.1 #_ env
-81 1 3 0.0939423 0.1 #_ env
-82 1 3 -0.145196 0.1 #_ env
-83 1 3 0.424093 0.1 #_ env
-84 1 3 -0.249122 0.1 #_ env
-85 1 3 -0.424827 0.1 #_ env
-86 1 3 0.835876 0.1 #_ env
-87 1 3 0.610891 0.1 #_ env
-88 1 3 -0.111466 0.1 #_ env
-89 1 3 -0.51245 0.1 #_ env
-90 1 3 -0.166511 0.1 #_ env
-91 1 3 0.145145 0.1 #_ env
-92 1 3 -0.124895 0.1 #_ env
-93 1 3 -0.127072 0.1 #_ env
-94 1 3 0.236223 0.1 #_ env
-95 1 3 -0.682901 0.1 #_ env
-96 1 3 0.0015619 0.1 #_ env
-97 1 3 0.513814 0.1 #_ env
-98 1 3 0.439383 0.1 #_ env
-99 1 3 -0.0668925 0.1 #_ env
-100 1 3 -0.665989 0.1 #_ env
 -9999 1 1 1 1 # terminator for survey observations 
 #
 0 #_N_fleets_with_discard

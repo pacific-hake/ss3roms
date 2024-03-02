@@ -1,22 +1,86 @@
 library(ggplot2)
 
-sim_res$ts |> 
+out.1 <- SS_output(here('bias_adjust/0.1/1/em'), 
+                   printstats = FALSE, verbose = FALSE) 
+
+out.7 <- SS_output(here('sims/0.7/1/em'), 
+                   printstats = FALSE, verbose = FALSE) 
+
+out.1 |>
+  SS_plots(c(1,2,3,4,7,11,13,14))
+ts <- readr::read_csv('sims_low_n/ss3sim_ts.csv')
+scalar <- readr::read_csv('sims_low_n/ss3sim_scalar.csv')
+dq <- readr::read_csv('sims_low_n/ss3sim_dq.csv')
+sim_res <- list(ts = ts, scalar = scalar, dq = dq)
+
+sim_res$scalar |> 
   as_tibble() |>
-  filter(year >= 100) |>
-  tidyr::pivot_wider(names_from = model_run, values_from = SpawnBio, 
-                     id_cols = c(iteration, scenario, year)) |>
-  mutate(are = abs((em-om)/om)) |> 
-  group_by(scenario, year) |>
+  # filter(year == 100) |>
+  # filter(iteration %in% c(5,8,9,10,12)) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = Recr_Unfished, 
+                     id_cols = c(iteration, scenario)) |>
+  mutate(are = abs((em-om)/om),
+         rel_err = (em - om)/om) |> 
+  # tidyr::pivot_wider(values_from = rel_err, names_from = scenario, id_cols = iteration)
+  group_by(scenario) |>
   summarise(low.low = quantile(are, 0.025),
             low = quantile(are, 0.25),
             mid = mean(are), 
             high = quantile (are, 0.75),
             high.high = quantile(are, 0.975)) |>
   ggplot() +
- # geom_linerange(aes(x = year, ymin = low.low, ymax = high.high, col = scenario)) +
-  geom_line(aes(x = year, y = mid, col = scenario))
+  geom_linerange(aes(x =scenario, ymin = low.low, ymax = high.high)) +
+  geom_point(aes(x = scenario, y = mid)) +
+  labs(x = 'Index SE', y = 'Absolute relative error in terminal recruitment')
 
+sim_res$ts |> 
+  as_tibble() |>
+  filter(year > 30) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = SpawnBio, 
+                     id_cols = c(iteration, scenario, year)) |>
+  mutate(are = abs((em-om)/om)) |> 
+  group_by(scenario, year) |>
+  summarise(low.low = quantile(are, 0.025),
+            low = quantile(are, 0.25),
+            mid = mean(are),
+            high = quantile (are, 0.75),
+            high.high = quantile(are, 0.975)) |>
+  ggplot() +
+  geom_line(aes(x = year, y = mid, col = scenario, group = paste(scenario))) +
+  labs(x = 'forecast year', y = 'mean absolute relative error in SSB', col = 'SE of index')
 library(future)
+
+sim_res$scalar |> 
+  as_tibble() |>
+  filter(year == 100) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = Recruit_0, 
+                     id_cols = c(iteration, scenario)) |>
+  mutate(are = abs((em-om)/om)) |> 
+  tidyr::pivot_wider(names_from = scenario, values_from = are, id_cols = iteration) |>
+  filter(`0.1` < no_ind)
+  
+sim_res$ts |> 
+  as_tibble() |>
+  filter(year == 100) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = SpawnBio, 
+                     id_cols = c(iteration, scenario)) |>
+  mutate(are = abs((em-om)/om)) |> 
+  tidyr::pivot_wider(names_from = scenario, values_from = are, id_cols = iteration) |>
+  filter(no_ind < `0.1`)
+
+sim_res$ts |> as_tibble() |>
+  filter(iteration %in% 1:6) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = Recruit_0, 
+                     id_cols = c(iteration, scenario, year)) |> 
+  arrange(year) |> 
+  # tidyr::pivot_wider(names_from = scenario, values_from = em, id_cols = c(iteration, om, year)) |>
+  ggplot() +
+  # geom_linerange(aes(x = om, ymin = `0.05`, ymax = `0.2`,
+            # col = year)) +
+  geom_point(aes(x = om, y = em, col = year, pch = scenario)) +
+  # geom_path(aes(x = om, y = em, col = scenario, group = scenario)) +
+  geom_abline(slope = 1, intercept = 0) +
+  facet_wrap(~iteration)
 
 dat <- r4ss::SS_readdat(
    file = system.file(
