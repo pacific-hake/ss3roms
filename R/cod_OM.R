@@ -51,6 +51,7 @@ cod.env$ctllist$Q_parms['LnQ_base_env(3)', 'INIT'] <- 1
 
 cod$dat <- cod.env$datlist
 cod$ctl <- cod.env$ctllist
+
 SS_write(cod, 'inst/extdata/models/Cod/OM', overwrite = TRUE)
 ss3sim::create_em(dir_in = 'inst/extdata/models/Cod/OM', 
                   dir_out = 'inst/extdata/models/Cod/EM')
@@ -80,14 +81,14 @@ df$cf.fvals.1 <- 'rep(0.1052, 87)'
 # model location, etc.
 df$om_dir <- 'inst/extdata/models/Cod/OM'
 df$em_dir <- 'inst/extdata/models/Cod/EM'
-df$bias_adjust <- TRUE
+df$bias_adjust <- FALSE
 
 tictoc::tic()
 ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
-nsim <- 50
-sim_dir <- 'bias_adjust'
+nsim <- 2
+sim_dir <- 'sim_test'
 set.seed(52890)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
@@ -114,6 +115,16 @@ furrr::future_walk(1:nsim, \(iter) {
   mod$ctl$Q_options <- mod$ctl$Q_options[-grep('env', rownames(mod$ctl$Q_options)),]
   mod$ctl$Q_parms <- mod$ctl$Q_parms[-grep('env', rownames(mod$ctl$Q_parms)),]
   
+  # set forecast F to historic F
+  mod$fore$ForeCatch <- tibble(Year = 101:112,
+                                   Seas = 1,
+                                   Fleet = 1,
+                                   `Catch or F` = stringr::str_extract(df$cf.fvals.1, 
+                                                                       '0.[:digit:]+')) |>
+    as.data.frame()
+  mod$fore$FirstYear_for_caps_and_allocations <- 113
+  mod$fore$InputBasis <- 99
+
   # write model and run
   SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
   run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
@@ -157,6 +168,16 @@ furrr::future_walk(1:nsim, \(iter) {
     mod$dat$CPUE$obs[mod$dat$CPUE$year %in% rec_yrs &
                        mod$dat$CPUE$index == rec_flt_ind] <- rec_devs
   }
+  
+  # set forecast F to historic F
+  mod$fore$ForeCatch <- tibble(Year = 101:112,
+                               Seas = 1,
+                               Fleet = 1,
+                               `Catch or F` = stringr::str_extract(df$cf.fvals.1, 
+                                                                   '0.[:digit:]+')) |>
+    as.data.frame()
+  mod$fore$FirstYear_for_caps_and_allocations <- 113
+  mod$fore$InputBasis <- 99
   
   seed <- sample(100000000, 1)
   # now sample survey index across new SDs
