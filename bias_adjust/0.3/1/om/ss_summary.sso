@@ -1,7 +1,7 @@
 #V3.30.22.1;_safe;_compile_date:_Jan 30 2024;_Stock_Synthesis_by_Richard_Methot_(NOAA)_using_ADMB_13.1
 ss3.dat #_DataFile 
 om.ctl #_Control 
-Run_Date: Sat Mar  2 04:35:50 2024
+Run_Date: Sun Mar  3 03:49:02 2024
 Final_phase: 1  N_iterations: 2
 #_LIKELIHOOD 
 Label logL*Lambda
@@ -587,7 +587,7 @@ SPRratio_109 0.339248 0
 SPRratio_110 0.339248 0
 SPRratio_111 0.339248 0
 SPRratio_112 0.339248 0
-SPRratio_113 1.11022e-16 0
+SPRratio_113 0.339248 0
 #_F Basis= _abs_F;_with_F=Exploit(bio)
 F_26 0.0776032 0
 F_27 0.0772272 0
@@ -676,7 +676,7 @@ F_109 0.0743124 0
 F_110 0.0763538 0
 F_111 0.078917 0
 F_112 0.0806581 0
-F_113 0 0
+F_113 0.0807109 0
 #_Depletion Basis=  100%*Virgin_Biomass
 Bratio_27 0.935501 0
 Bratio_28 0.889967 0
@@ -783,7 +783,7 @@ annF_MSY 0.19465 0
 Dead_Catch_MSY 2.53816e+08 0
 Ret_Catch_MSY 2.53816e+08 0
 B_MSY/SSB_unfished 0.313819 0
-ForeCatch_113 0 0
+ForeCatch_113 2.18757e+08 0
 OFLCatch_113 2.18757e+08 0
 #_Extra_stdev
 ln(SPB)_1 22.1304 0
@@ -1135,4 +1135,4 @@ TotCatch_109 2.25486e+08 0.0
 TotCatch_110 2.3085e+08 0.0
 TotCatch_111 2.33254e+08 0.0
 TotCatch_112 2.29185e+08 0.0
-TotCatch_113 0 0.0
+TotCatch_113 2.18757e+08 0.0

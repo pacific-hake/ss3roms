@@ -2,7 +2,7 @@
 #C forecast file written by R function SS_writeforecast
 #C rerun model to get more complete formatting in forecast.ss_new
 #C should work with SS version: 3.3
-#C file write time: 2024-03-02 04:35:53.156931
+#C file write time: 2024-03-03 03:49:04.144559
 # for all year entries except rebuilder; enter either: actual year, -999 for styr, 0 for endyr, neg number for rel. endyr
 1 # Benchmarks: 0=skip; 1=calc F_spr,F_btgt,F_msy; 2=calc F_spr,F0.1,F_msy; 3=add F_Blimit; 
 2 # Do_MSY: 1= set to F(SPR); 2=calc F(MSY); 3=set to F(Btgt) or F0.1; 4=set to F(endyr); 5=calc F(MEY) with MSY_unit options
@@ -44,7 +44,7 @@
 # values for top, bottom and buffer exist, but not used when Policy=0
 0.4 # Control rule inflection for constant F (as frac of Bzero, e.g. 0.40); must be > control rule cutoff, or set to -1 to use Bmsy/SSB_unf 
 0.01 # Control rule cutoff for no F (as frac of Bzero, e.g. 0.10) 
-0 # Buffer:  enter Control rule target as fraction of Flimit (e.g. 0.75), negative value invokes list of [year, scalar] with filling from year to YrMax 
+1 # Buffer:  enter Control rule target as fraction of Flimit (e.g. 0.75), negative value invokes list of [year, scalar] with filling from year to YrMax 
 #
 3 #_N forecast loops (1=OFL only; 2=ABC; 3=get F from forecast ABC catch with allocations applied)
 3 # First forecast loop with stochastic recruitment

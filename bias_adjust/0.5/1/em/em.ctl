@@ -1,6 +1,6 @@
 #V3.30
 #C file created using the SS_writectl function in the R package r4ss
-#C file write time: 2024-02-27 01:16:27.0339
+#C file write time: 2024-03-03 03:44:10.667825
 #
 0 # 0 means do not read wtatage.ss; 1 means read and usewtatage.ss and also read and use growth parameters
 1 #_N_Growth_Patterns
@@ -82,7 +82,7 @@
  -5	 5	   0	   0	   1	0	-99	0	0	0	0	0	0	0	#_SR_regime  
   0	 0	   0	   0	   0	0	 -6	0	0	0	0	0	0	0	#_SR_autocorr
 #_no timevary SR parameters
-1 #do_recdev:  0=none; 1=devvector (R=F(SSB)+dev); 2=deviations (R=F(SSB)+dev); 3=deviations (R=R0*dev; dev2=R-f(SSB)); 4=like 3 with sum(dev2) adding penalty
+2 #do_recdev:  0=none; 1=devvector (R=F(SSB)+dev); 2=deviations (R=F(SSB)+dev); 3=deviations (R=R0*dev; dev2=R-f(SSB)); 4=like 3 with sum(dev2) adding penalty
 6 # first year of main recr_devs; early devs can preceed this era
 100 # last year of main recr_devs; forecast devs start in following year
 2 #_recdev phase
@@ -91,11 +91,11 @@
 4 #_recdev_early_phase
 0 #_forecast_recruitment phase (incl. late recr) (0 value resets to maxphase+1)
 1 #_lambda for Fcast_recr_like occurring before endyr+1
- -2.2448 #_last_early_yr_nobias_adj_in_MPD
- 22.1666 #_first_yr_fullbias_adj_in_MPD
- 94.8674 #_last_yr_fullbias_adj_in_MPD
-101.9545 #_first_recent_yr_nobias_adj_in_MPD
-  0.9125 #_max_bias_adj_in_MPD (1.0 to mimic pre-2009 models)
+ -2.2385 #_last_early_yr_nobias_adj_in_MPD
+ 22.3917 #_first_yr_fullbias_adj_in_MPD
+ 94.8751 #_last_yr_fullbias_adj_in_MPD
+101.9447 #_first_recent_yr_nobias_adj_in_MPD
+  0.9046 #_max_bias_adj_in_MPD (1.0 to mimic pre-2009 models)
 0 #_period of cycles in recruitment (N parms read below)
 -10 #min rec_dev
 10 #max rec_dev

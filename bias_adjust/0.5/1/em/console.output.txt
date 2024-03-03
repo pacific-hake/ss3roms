@@ -1,6 +1,6 @@
 ###
 console output
-2024-03-02 05:09:35.987195
+2024-03-03 07:48:45.359947
 ###
  
  reading from starter.ss
@@ -12,38 +12,37 @@ Data read successful 999
 End of control file successful! 999
 Begin setting up parameters ...  end of parameter section 
 Evaluating biology calculations once ... done
-Starting optimization of 'ss3' in phase 1 of 6 at Sat Mar  2 05:08:55 2024
-phase= 1 | nvar=  1 | iter=  0 | nll=2.64e+03 | mag=5.83e+03 | par[  1]=SR_parm[1]
-phase= 1 | nvar=  1 | iter=  4 | nll=2.61e+03 | mag=2.14e+00 | par[  1]=SR_parm[1]
-phase= 2 | nvar= 98 | iter=  0 | nll=2.61e+03 | mag=2.29e+03 | par[ 67]=recdev1[66]
-phase= 2 | nvar= 98 | iter= 20 | nll=2.27e+03 | mag=1.59e+03 | par[ 67]=recdev1[66]
-phase= 2 | nvar= 98 | iter= 40 | nll=2.14e+03 | mag=1.41e+03 | par[  1]=SR_parm[1]
-phase= 2 | nvar= 98 | iter= 60 | nll=2.11e+03 | mag=5.83e+02 | par[  1]=SR_parm[1]
-Exiting without success due to excessive function evaluations (maxfn=100) | mag=441.691
-phase= 2 | nvar= 98 | iter= 67 | nll=2.11e+03 | mag=4.42e+02 | par[  1]=SR_parm[1]
-phase= 3 | nvar=100 | iter=  0 | nll=2.11e+03 | mag=4.42e+02 | par[  1]=SR_parm[1]
-phase= 3 | nvar=100 | iter= 20 | nll=2.10e+03 | mag=2.26e+02 | par[  1]=SR_parm[1]
-phase= 3 | nvar=100 | iter= 40 | nll=2.10e+03 | mag=2.56e+01 | par[ 98]=selparm[3]
-phase= 3 | nvar=100 | iter= 60 | nll=2.10e+03 | mag=4.29e+00 | par[ 98]=selparm[3]
-Exiting without success due to excessive function evaluations (maxfn=100) | mag=1.4034
-phase= 3 | nvar=100 | iter= 75 | nll=2.10e+03 | mag=1.40e+00 | par[ 98]=selparm[3]
-phase= 4 | nvar=108 | iter=  0 | nll=2.10e+03 | mag=1.38e+03 | par[  2]=MGparm[3]
+Starting optimization of 'ss3' in phase 1 of 6 at Sun Mar  3 07:48:17 2024
+phase= 1 | nvar=  1 | iter=  0 | nll=2.64e+03 | mag=5.74e+03 | par[  1]=SR_parm[1]
+phase= 1 | nvar=  1 | iter=  4 | nll=2.61e+03 | mag=1.92e+00 | par[  1]=SR_parm[1]
+phase= 2 | nvar= 98 | iter=  0 | nll=2.61e+03 | mag=2.29e+03 | par[ 67]=recdev2[66]
+phase= 2 | nvar= 98 | iter= 20 | nll=2.22e+03 | mag=1.35e+03 | par[ 67]=recdev2[66]
+phase= 2 | nvar= 98 | iter= 40 | nll=2.13e+03 | mag=2.18e+03 | par[  1]=SR_parm[1]
+phase= 2 | nvar= 98 | iter= 60 | nll=2.11e+03 | mag=8.09e+02 | par[  1]=SR_parm[1]
+Exiting without success due to excessive function evaluations (maxfn=100) | mag=173.157
+phase= 2 | nvar= 98 | iter= 73 | nll=2.11e+03 | mag=1.73e+02 | par[  1]=SR_parm[1]
+phase= 3 | nvar=100 | iter=  0 | nll=2.11e+03 | mag=2.59e+02 | par[ 98]=selparm[3]
+phase= 3 | nvar=100 | iter= 20 | nll=2.10e+03 | mag=2.05e+02 | par[100]=selparm[9]
+phase= 3 | nvar=100 | iter= 40 | nll=2.10e+03 | mag=1.04e+02 | par[100]=selparm[9]
+phase= 3 | nvar=100 | iter= 60 | nll=2.10e+03 | mag=2.31e+01 | par[100]=selparm[9]
+Exiting without success due to excessive function evaluations (maxfn=100) | mag=1.85436
+phase= 3 | nvar=100 | iter= 79 | nll=2.10e+03 | mag=1.85e+00 | par[ 88]=recdev2[87]
+phase= 4 | nvar=108 | iter=  0 | nll=2.10e+03 | mag=1.39e+03 | par[  2]=MGparm[3]
 phase= 4 | nvar=108 | iter= 20 | nll=2.10e+03 | mag=1.04e+03 | par[  2]=MGparm[3]
-phase= 4 | nvar=108 | iter= 40 | nll=2.10e+03 | mag=4.16e+02 | par[  2]=MGparm[3]
-phase= 4 | nvar=108 | iter= 60 | nll=2.10e+03 | mag=6.42e+01 | par[  2]=MGparm[3]
-Exiting without success due to excessive function evaluations (maxfn=100) | mag=13.1726
-phase= 4 | nvar=108 | iter= 77 | nll=2.10e+03 | mag=1.32e+01 | par[  2]=MGparm[3]
-phase= 5 | nvar=110 | iter=  0 | nll=2.10e+03 | mag=6.64e+01 | par[  5]=MGparm[6]
-phase= 5 | nvar=110 | iter= 20 | nll=2.10e+03 | mag=1.06e+02 | par[108]=selparm[3]
-phase= 5 | nvar=110 | iter= 40 | nll=2.10e+03 | mag=2.46e+01 | par[108]=selparm[3]
-phase= 5 | nvar=110 | iter= 60 | nll=2.10e+03 | mag=3.28e+00 | par[108]=selparm[3]
-phase= 5 | nvar=110 | iter= 80 | nll=2.10e+03 | mag=8.52e-01 | par[ 74]=recdev1[63]
-phase= 5 | nvar=110 | iter=100 | nll=2.10e+03 | mag=2.16e-01 | par[ 76]=recdev1[65]
-phase= 5 | nvar=110 | iter=120 | nll=2.10e+03 | mag=2.16e-03 | par[ 58]=recdev1[47]
-phase= 5 | nvar=110 | iter=121 | nll=2.10e+03 | mag=4.59e-07 | par[ 33]=recdev1[22]
-phase= 6 | nvar=122 | iter=  0 | nll=2.10e+03 | mag=4.59e-07 | par[ 33]=recdev1[22]
-Optimization completed after 40 s with final statistics:
-  nll=2099.831121 | mag=4.59098e-07 | par[ 33]=recdev1[22]
+phase= 4 | nvar=108 | iter= 40 | nll=2.10e+03 | mag=4.89e+02 | par[  2]=MGparm[3]
+phase= 4 | nvar=108 | iter= 60 | nll=2.10e+03 | mag=2.61e+01 | par[  2]=MGparm[3]
+Exiting without success due to excessive function evaluations (maxfn=100) | mag=6.50523
+phase= 4 | nvar=108 | iter= 76 | nll=2.10e+03 | mag=6.51e+00 | par[  2]=MGparm[3]
+phase= 5 | nvar=110 | iter=  0 | nll=2.10e+03 | mag=6.66e+01 | par[  5]=MGparm[6]
+phase= 5 | nvar=110 | iter= 20 | nll=2.10e+03 | mag=1.53e+02 | par[  6]=SR_parm[1]
+phase= 5 | nvar=110 | iter= 40 | nll=2.10e+03 | mag=6.59e+01 | par[  6]=SR_parm[1]
+phase= 5 | nvar=110 | iter= 60 | nll=2.10e+03 | mag=3.22e+01 | par[  6]=SR_parm[1]
+phase= 5 | nvar=110 | iter= 80 | nll=2.10e+03 | mag=3.30e+00 | par[ 29]=recdev2[18]
+phase= 5 | nvar=110 | iter=100 | nll=2.10e+03 | mag=5.34e-01 | par[ 29]=recdev2[18]
+phase= 5 | nvar=110 | iter=119 | nll=2.10e+03 | mag=3.36e-06 | par[  2]=MGparm[3]
+phase= 6 | nvar=122 | iter=  0 | nll=2.10e+03 | mag=3.36e-06 | par[  2]=MGparm[3]
+Optimization completed after 27 s with final statistics:
+  nll=2100.464788 | mag=3.36292e-06 | par[  2]=MGparm[3]
 
 Iterations: 485
 Finished calculating benchmarks
@@ -58,4 +57,4 @@ Begin writing *.ss_new output files ... Finished writing *.ss_new output files
 !!  Run has completed  !! 
 !!  See warning.sso for 3 warnings  and 4 notes 
 
-Finished running model 'ss3' after 41 s.
+Finished running model 'ss3' after 28 s.

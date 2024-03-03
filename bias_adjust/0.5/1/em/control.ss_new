@@ -6,7 +6,7 @@
 #_Source_code_at:_https://github.com/nmfs-ost/ss3-source-code
 
 #C file created using the SS_writectl function in the R package r4ss
-#C file write time: 2024-02-27 01:16:27.0339
+#C file write time: 2024-03-03 03:44:10.667825
 #_data_and_control_files: ss3.dat // em.ctl
 0  # 0 means do not read wtatage.ss; 1 means read and use wtatage.ss and also read and use growth parameters
 1  #_N_Growth_Patterns (Growth Patterns, Morphs, Bio Patterns, GP are terms used interchangeably in SS3)
@@ -72,11 +72,11 @@
 # Sex: 1  BioPattern: 1  NatMort
  0.01 1.8 0.2 0.1 0.8 0 -3 0 0 0 0 0 0 0 # NatM_uniform_Fem_GP_1
 # Sex: 1  BioPattern: 1  Growth
- 1 100 21.6224 30.8 0.2 0 4 0 0 0 0 0 0 0 # L_at_Amin_Fem_GP_1
- 6.6 660 130.537 120.1 0.2 0 4 0 0 0 0 0 0 0 # L_at_Amax_Fem_GP_1
- 0.001 1 0.198573 0.25 0.8 0 4 0 0 0 0 0 0 0 # VonBert_K_Fem_GP_1
- 0.001 0.5 0.100635 0.1 0.8 0 5 0 0 0 0 0 0 0 # CV_young_Fem_GP_1
- 0.001 0.5 0.109448 0.1 0.8 0 5 0 0 0 0 0 0 0 # CV_old_Fem_GP_1
+ 1 100 21.6164 30.8 0.2 0 4 0 0 0 0 0 0 0 # L_at_Amin_Fem_GP_1
+ 6.6 660 130.533 120.1 0.2 0 4 0 0 0 0 0 0 0 # L_at_Amax_Fem_GP_1
+ 0.001 1 0.198594 0.25 0.8 0 4 0 0 0 0 0 0 0 # VonBert_K_Fem_GP_1
+ 0.001 0.5 0.10066 0.1 0.8 0 5 0 0 0 0 0 0 0 # CV_young_Fem_GP_1
+ 0.001 0.5 0.109455 0.1 0.8 0 5 0 0 0 0 0 0 0 # CV_old_Fem_GP_1
 # Sex: 1  BioPattern: 1  WtLen
  0 3 6.8e-06 6.8e-06 0 0 -3 0 0 0 0 0 0 0 # Wtlen_1_Fem_GP_1
  2.5 3.5 3.101 3.101 0.2 0 -3 0 0 0 0 0 0 0 # Wtlen_2_Fem_GP_1
@@ -111,13 +111,13 @@
 0  # 0/1 to use steepness in initial equ recruitment calculation
 0  #  future feature:  0/1 to make realized sigmaR a function of SR curvature
 #_          LO            HI          INIT         PRIOR         PR_SD       PR_type      PHASE    env-var    use_dev   dev_mnyr   dev_mxyr     dev_PH      Block    Blk_Fxn #  parm_name
-             4            20       18.6916          10.3            10             0          1          0          0          0          0          0          0          0 # SR_LN(R0)
+             4            20       18.7108          10.3            10             0          1          0          0          0          0          0          0          0 # SR_LN(R0)
            0.2             1          0.65           0.7          0.05             0         -3          0          0          0          0          0          0          0 # SR_BH_steep
              0             2           0.4           0.8           0.8             0        -99          0          0          0          0          0          0          0 # SR_sigmaR
             -5             5             0             0             1             0        -99          0          0          0          0          0          0          0 # SR_regime
              0             0             0             0             0             0         -6          0          0          0          0          0          0          0 # SR_autocorr
 #_no timevary SR parameters
-1 #do_recdev:  0=none; 1=devvector (R=F(SSB)+dev); 2=deviations (R=F(SSB)+dev); 3=deviations (R=R0*dev; dev2=R-f(SSB)); 4=like 3 with sum(dev2) adding penalty
+2 #do_recdev:  0=none; 1=devvector (R=F(SSB)+dev); 2=deviations (R=F(SSB)+dev); 3=deviations (R=R0*dev; dev2=R-f(SSB)); 4=like 3 with sum(dev2) adding penalty
 6 # first year of main recr_devs; early devs can precede this era
 100 # last year of main recr_devs; forecast devs start in following year
 2 #_recdev phase 
@@ -126,11 +126,11 @@
  4 #_recdev_early_phase
  0 #_forecast_recruitment phase (incl. late recr) (0 value resets to maxphase+1)
  1 #_lambda for Fcast_recr_like occurring before endyr+1
- -2.2448 #_last_yr_nobias_adj_in_MPD; begin of ramp
- 22.1666 #_first_yr_fullbias_adj_in_MPD; begin of plateau
- 94.8674 #_last_yr_fullbias_adj_in_MPD
- 101.954 #_end_yr_for_ramp_in_MPD (can be in forecast to shape ramp, but SS3 sets bias_adj to 0.0 for fcast yrs)
- 0.9125 #_max_bias_adj_in_MPD (typical ~0.8; -3 sets all years to 0.0; -2 sets all non-forecast yrs w/ estimated recdevs to 1.0; -1 sets biasadj=1.0 for all yrs w/ recdevs)
+ -2.2385 #_last_yr_nobias_adj_in_MPD; begin of ramp
+ 22.3917 #_first_yr_fullbias_adj_in_MPD; begin of plateau
+ 94.8751 #_last_yr_fullbias_adj_in_MPD
+ 101.945 #_end_yr_for_ramp_in_MPD (can be in forecast to shape ramp, but SS3 sets bias_adj to 0.0 for fcast yrs)
+ 0.9046 #_max_bias_adj_in_MPD (typical ~0.8; -3 sets all years to 0.0; -2 sets all non-forecast yrs w/ estimated recdevs to 1.0; -1 sets biasadj=1.0 for all yrs w/ recdevs)
  0 #_period of cycles in recruitment (N parms read below)
  -10 #min rec_dev
  10 #max rec_dev
@@ -143,7 +143,7 @@
 #
 # all recruitment deviations
 #  1E 2E 3E 4E 5E 6R 7R 8R 9R 10R 11R 12R 13R 14R 15R 16R 17R 18R 19R 20R 21R 22R 23R 24R 25R 26R 27R 28R 29R 30R 31R 32R 33R 34R 35R 36R 37R 38R 39R 40R 41R 42R 43R 44R 45R 46R 47R 48R 49R 50R 51R 52R 53R 54R 55R 56R 57R 58R 59R 60R 61R 62R 63R 64R 65R 66R 67R 68R 69R 70R 71R 72R 73R 74R 75R 76R 77R 78R 79R 80R 81R 82R 83R 84R 85R 86R 87R 88R 89R 90R 91R 92R 93R 94R 95R 96R 97R 98R 99R 100R 101F 102F 103F 104F 105F 106F 107F 108F 109F 110F 111F 112F
-#  0.0936302 -0.0721437 -0.0862844 -0.0457214 0.0459631 0.221357 0.264119 -0.248378 -0.309008 -0.273627 0.00216571 -0.0933631 0.297625 0.00926972 -0.482401 0.0560119 0.000906866 -0.0668167 -0.245175 -0.56396 0.144169 0.571267 0.283892 0.376913 -0.189359 -0.0322914 0.0250144 0.427441 0.391588 0.153399 -0.023522 0.288791 0.0605681 -0.110622 -0.504742 0.307258 -0.148485 0.198904 -0.284042 -0.276802 -0.195872 0.880461 -0.799352 -0.964007 0.479628 0.0813326 -0.326668 -0.188289 0.245647 -0.328601 -0.0360031 -0.180625 -0.257094 0.347845 0.152426 0.0934234 -0.451758 0.0496988 0.55917 -0.321581 -0.0256396 0.149026 0.075401 -0.139038 0.230457 -0.100278 0.141203 -0.186684 0.163472 -0.252934 0.933804 -0.665938 0.526314 0.075431 -0.609411 -0.321754 0.218673 -0.0555914 -0.375801 0.0152635 0.0746469 -0.19125 0.406446 -0.149233 -0.360462 0.872531 0.816472 0.0642017 -0.380435 -0.388298 0.265626 0.0891053 -0.235967 0.216686 -0.599347 0.0800712 0.467178 0.341389 0.178855 -0.432035 0 0 0 0 0 0 0 0 0 0 0 0
+#  0.0838773 -0.074517 -0.0890931 -0.049549 0.0411322 0.200953 0.243668 -0.268648 -0.329294 -0.293936 -0.0181872 -0.113733 0.277262 -0.0110906 -0.50274 0.035651 -0.0194299 -0.087117 -0.265437 -0.584198 0.123919 0.550968 0.264164 0.357171 -0.209134 -0.0497895 0.00763451 0.410275 0.374516 0.136366 -0.0405536 0.271916 0.0436603 -0.127567 -0.521849 0.290552 -0.165278 0.182357 -0.300695 -0.29337 -0.212328 0.864481 -0.815981 -0.980721 0.463683 0.0652932 -0.342865 -0.204389 0.229783 -0.344665 -0.0518611 -0.196508 -0.27297 0.332255 0.136835 0.0778374 -0.46758 0.0340084 0.543545 -0.337448 -0.0414755 0.13314 0.0594601 -0.155088 0.214468 -0.116361 0.125178 -0.202819 0.14741 -0.268344 0.918098 -0.681137 0.510638 0.0597297 -0.624948 -0.337532 0.202704 -0.0714472 -0.391454 -0.000449428 0.0590167 -0.206689 0.390934 -0.164535 -0.375616 0.857057 0.801067 0.0489717 -0.39561 -0.403602 0.25006 0.073653 -0.251111 0.201534 -0.613664 0.0657578 0.453467 0.328987 0.166535 -0.444355 0 0 0 0 0 0 0 0 0 0 0 0
 #
 #Fishing Mortality info 
 0.3 # F ballpark value in units of annual_F
@@ -159,7 +159,7 @@
 # F rates by fleet x season
 # Yr:  26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112
 # seas:  1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
-# Fishery 0.116268 0.117402 0.117143 0.116589 0.115115 0.114084 0.113746 0.113096 0.112397 0.111162 0.108955 0.107815 0.10926 0.111991 0.1133 0.112728 0.113041 0.112118 0.110463 0.110781 0.108735 0.108326 0.107183 0.105791 0.104165 0.104738 0.102323 0.1026 0.104287 0.103713 0.102047 0.102619 0.10125 0.101605 0.101638 0.100295 0.0994826 0.0997756 0.101578 0.101315 0.102692 0.102989 0.103918 0.103694 0.105447 0.103826 0.104422 0.104065 0.107329 0.107546 0.110482 0.112811 0.112744 0.113437 0.112779 0.111899 0.113381 0.114375 0.113724 0.11324 0.11471 0.116771 0.12042 0.121461 0.122744 0.121404 0.11943 0.118043 0.116626 0.117378 0.118467 0.119141 0.118977 0.119819 0.121367 0.1052 0.1052 0.1052 0.1052 0.1052 0.1052 0.1052 0.1052 0.1052 0.1052 0.1052 0.1052
+# Fishery 0.116158 0.117304 0.117057 0.116514 0.115048 0.114027 0.1137 0.113062 0.112376 0.111153 0.108955 0.107824 0.109277 0.112017 0.113334 0.112769 0.113088 0.11217 0.11052 0.110843 0.1088 0.108389 0.107246 0.105856 0.10423 0.104803 0.102387 0.102665 0.104351 0.103776 0.102109 0.10268 0.101308 0.101659 0.101687 0.10034 0.0995261 0.0998173 0.101617 0.101353 0.102729 0.103027 0.103956 0.103732 0.105487 0.103866 0.104463 0.104107 0.107372 0.107586 0.110515 0.112836 0.112761 0.113448 0.112783 0.111898 0.113374 0.114362 0.113706 0.113217 0.114682 0.116739 0.120383 0.121419 0.122698 0.121357 0.119384 0.117994 0.116572 0.117315 0.118393 0.119054 0.118877 0.119702 0.121227 0.120525 0.12198 0.123025 0.121853 0.120205 0.120184 0.122986 0.129152 0.136887 0.142355 0.146173 0.145684
 #
 #_Q_setup for fleets with cpue or survey data
 #_1:  fleet number
@@ -230,14 +230,14 @@
 # 1   Fishery LenSelex
             20           150       100.875          50.8          0.05             0          2          0          0          0          0        0.5          0          0  #  Size_DblN_peak_Fishery(1)
             -5             3            -3            -3          0.05             0        -99          0          0          0          0        0.5          0          0  #  Size_DblN_top_logit_Fishery(1)
-             0            26       5.16831           5.1          0.05             0          3          0          0          0          0        0.5          0          0  #  Size_DblN_ascend_se_Fishery(1)
+             0            26        5.1683           5.1          0.05             0          3          0          0          0          0        0.5          0          0  #  Size_DblN_ascend_se_Fishery(1)
             -2            16            15            15          0.05             0        -99          0          0          0          0        0.5          0          0  #  Size_DblN_descend_se_Fishery(1)
            -15             5          -999          -999          0.05             0        -99          0          0          0          0        0.5          0          0  #  Size_DblN_start_logit_Fishery(1)
             -5          1000           999           999          0.05             0        -99          0          0          0          0        0.5          0          0  #  Size_DblN_end_logit_Fishery(1)
 # 2   Survey LenSelex
-            20           150       74.6826          41.8          0.05             0          2          0          0          0          0        0.5          0          0  #  Size_DblN_peak_Survey(2)
+            20           150        74.685          41.8          0.05             0          2          0          0          0          0        0.5          0          0  #  Size_DblN_peak_Survey(2)
             -5             3            -4            -4          0.05             0        -99          0          0          0          0        0.5          0          0  #  Size_DblN_top_logit_Survey(2)
-            -4            26       5.18671           5.2          0.05             0          3          0          0          0          0        0.5          0          0  #  Size_DblN_ascend_se_Survey(2)
+            -4            26       5.18692           5.2          0.05             0          3          0          0          0          0        0.5          0          0  #  Size_DblN_ascend_se_Survey(2)
             -2            16            14            14          0.05             0        -99          0          0          0          0        0.5          0          0  #  Size_DblN_descend_se_Survey(2)
           -100           100           -99           -99          0.05             0        -99          0          0          0          0        0.5          0          0  #  Size_DblN_start_logit_Survey(2)
           -100           100            99            99          0.05             0        -99          0          0          0          0        0.5          0          0  #  Size_DblN_end_logit_Survey(2)

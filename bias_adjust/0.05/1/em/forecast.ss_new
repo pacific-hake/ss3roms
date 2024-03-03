@@ -2,7 +2,7 @@
 #C forecast file written by R function SS_writeforecast
 #C rerun model to get more complete formatting in forecast.ss_new
 #C should work with SS version: 3.3
-#C file write time: 2024-03-02 04:45:04.944572
+#C file write time: 2024-03-03 07:38:29.570915
 # for all year entries except rebuilder; enter either: actual year, -999 for styr, 0 for endyr, neg number for rel. endyr
 1 # Benchmarks: 0=skip; 1=calc F_spr,F_btgt,F_msy; 2=calc F_spr,F0.1,F_msy; 3=add F_Blimit; 
 2 # Do_MSY: 1= set to F(SPR); 2=calc F(MSY); 3=set to F(Btgt) or F0.1; 4=set to F(endyr); 5=calc F(MEY) with MSY_unit options
@@ -44,7 +44,7 @@
 # values for top, bottom and buffer exist, but not used when Policy=0
 0.4 # Control rule inflection for constant F (as frac of Bzero, e.g. 0.40); must be > control rule cutoff, or set to -1 to use Bmsy/SSB_unf 
 0.01 # Control rule cutoff for no F (as frac of Bzero, e.g. 0.10) 
-0 # Buffer:  enter Control rule target as fraction of Flimit (e.g. 0.75), negative value invokes list of [year, scalar] with filling from year to YrMax 
+1 # Buffer:  enter Control rule target as fraction of Flimit (e.g. 0.75), negative value invokes list of [year, scalar] with filling from year to YrMax 
 #
 3 #_N forecast loops (1=OFL only; 2=ABC; 3=get F from forecast ABC catch with allocations applied)
 3 # First forecast loop with stochastic recruitment
@@ -76,21 +76,21 @@
 # terminate with -9999 in year field 
 # no allocation groups
 #
-99 # basis for input Fcast catch: -1=read basis with each obs; 2=dead catch; 3=retained catch; 99=input apical_F; NOTE: bio vs num based on fleet's catchunits
+2 # basis for input Fcast catch: -1=read basis with each obs; 2=dead catch; 3=retained catch; 99=input apical_F; NOTE: bio vs num based on fleet's catchunits
 #enter list of Fcast catches or Fa; terminate with line having year=-9999
 #_Yr Seas Fleet Catch(or_F)
- 101 1 1 0.1052
- 102 1 1 0.1052
- 103 1 1 0.1052
- 104 1 1 0.1052
- 105 1 1 0.1052
- 106 1 1 0.1052
- 107 1 1 0.1052
- 108 1 1 0.1052
- 109 1 1 0.1052
- 110 1 1 0.1052
- 111 1 1 0.1052
- 112 1 1 0.1052
+ 101 1 1 1.9289e+08
+ 102 1 1 2.00703e+08
+ 103 1 1 2.11912e+08
+ 104 1 1 2.15415e+08
+ 105 1 1 2.10659e+08
+ 106 1 1 2.06464e+08
+ 107 1 1 2.08027e+08
+ 108 1 1 2.15709e+08
+ 109 1 1 2.25486e+08
+ 110 1 1 2.3085e+08
+ 111 1 1 2.33254e+08
+ 112 1 1 2.29185e+08
 -9999 1 1 0 
 #
 999 # verify end of input 

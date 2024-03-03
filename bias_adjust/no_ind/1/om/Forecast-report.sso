@@ -1,7 +1,7 @@
 #V3.30.22.1;_safe;_compile_date:_
 Jan 30 2024
 ;_Stock_Synthesis_by_Richard_Methot_(NOAA)_using_ADMB_13.1
-Sat Mar  2 04:35:50 2024
+Sun Mar  3 03:49:02 2024
 Bmark_relF(by_fleet_&seas) (excluding non-scaled bycatch fleets)
  1 0 0
 #
@@ -16,7 +16,7 @@ YPR_mask for including catch:
 #V3.30.22.1;_safe;_compile_date:_
 Jan 30 2024
 ;_Stock_Synthesis_by_Richard_Methot_(NOAA)_using_ADMB_13.1
-Sat Mar  2 04:35:50 2024
+Sun Mar  3 03:49:02 2024
 Bmark_relF(by_fleet_&seas) (excluding non-scaled bycatch fleets)
  1 0 0
 #
@@ -220,7 +220,7 @@ seas seas_dur  Fishery
 1 1 0.1052
 #
 N_forecast_yrs: 1
-OY_Control_Rule  Inflection: 0.4 Intercept: 0.01 Scale: 0; Policy (2): ramp scales F as f(B) and buffer (H4010_scale) applied to F
+OY_Control_Rule  Inflection: 0.4 Intercept: 0.01 Scale: 1; Policy (2): ramp scales F as f(B) and buffer (H4010_scale) applied to F
 #
 FORECAST:_With_Constant_F=Fofl;_No_Input_Catches_or_Adjustments;_Equil_Recr;_No_inpl_error
 pop year ABC_Loop season Ramp&Buffer bio-all bio-Smry SpawnBio Depletion recruit-0  sel(B):_1 dead(B):_1 retain(B):_1 sel(N):_1 dead(N):_1 retain(N):_1 F:_1 R/C Catch_Cap Total_Catch ann_F
@@ -228,10 +228,10 @@ pop year ABC_Loop season Ramp&Buffer bio-all bio-Smry SpawnBio Depletion recruit
 FORECAST:_With_F=Fabc;_With_Input_Catches_and_Catch_Adjustments;_Equil_Recr;_No_inpl_error
 pop year ABC_Loop season Ramp&Buffer bio-all bio-Smry SpawnBio Depletion recruit-0  sel(B):_1 dead(B):_1 retain(B):_1 sel(N):_1 dead(N):_1 retain(N):_1 F:_1 R/C Catch_Cap Total_Catch ann_F
 1 113 1 1 1 2.71169e+09 2.71038e+09 2.68638e+09 0.657752 1.23568e+08  2.18757e+08 2.18757e+08 2.18757e+08 1.48032e+07 1.48032e+07 1.48032e+07 0.1052 R  NA  2.18757e+08 0
-1 113 2 1 0 2.71169e+09 2.71038e+09 2.68638e+09 0.657752 1.23568e+08  0 0 0 0 0 0 0 R  NA  0 0
-1 113 3 1 0 2.71169e+09 2.71038e+09 2.68638e+09 0.657752 1.23568e+08  0 0 0 0 0 0 0 R  NA  0 0
+1 113 2 1 1 2.71169e+09 2.71038e+09 2.68638e+09 0.657752 1.23568e+08  2.18757e+08 2.18757e+08 2.18757e+08 1.48032e+07 1.48032e+07 1.48032e+07 0.1052 R  NA  2.18757e+08 0
+1 113 3 1 1 2.71169e+09 2.71038e+09 2.68638e+09 0.657752 1.23568e+08  2.18757e+08 2.18757e+08 2.18757e+08 1.48032e+07 1.48032e+07 1.48032e+07 0.1052 R  NA  2.18757e+08 0
 FORECAST:_With_F_to_match_adjusted_catch;_With_Input_Catches_and_Catch_Adjustments;_Stochastic_Recr;_With_inpl_error
 pop year ABC_Loop season Ramp&Buffer bio-all bio-Smry SpawnBio Depletion recruit-0  sel(B):_1 dead(B):_1 retain(B):_1 sel(N):_1 dead(N):_1 retain(N):_1 F:_1 R/C Catch_Cap Total_Catch ann_F
-1 113 3 1 0 2.71114e+09 2.71038e+09 2.68638e+09 0.657752 7.17043e+07  0 0 0 0 0 0 0 R  NA  0 0
+1 113 3 1 1 2.71114e+09 2.71038e+09 2.68638e+09 0.657752 7.17043e+07  2.18757e+08 2.18757e+08 2.18757e+08 1.48032e+07 1.48032e+07 1.48032e+07 0.1052 R  NA  2.18757e+08 0.0807109
 #
  FORECAST: in Bzero report with fishery onoff= 0

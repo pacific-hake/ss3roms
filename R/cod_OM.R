@@ -32,6 +32,12 @@ cod$dat$CPUE <- filter(cod$dat$CPUE, index == which(cod$dat$fleetnames == 'Surve
 # extend number of years (will be forecast in the EM)
 cod$dat$endyr <- 112
 
+# remove recdev sum to zero constraint
+cod$ctl$do_recdev <- 2
+
+# change forecast buffer so fish are actually caught!
+cod$fore$Flimitfraction <- 1
+
 # move selectivity curve right to give index a shot
 cod$ctl$size_selex_parms$INIT[grep('1_Fishery', rownames(cod$ctl$size_selex_parms))] <- 100
 cod$ctl$size_selex_parms$INIT[grep('1_Survey', rownames(cod$ctl$size_selex_parms))] <- 75
@@ -87,7 +93,7 @@ tictoc::tic()
 ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
-nsim <- 50
+nsim <- 100
 sim_dir <- 'bias_adjust'
 set.seed(52890)
 
@@ -116,20 +122,19 @@ furrr::future_walk(1:nsim, \(iter) {
   mod$ctl$Q_parms <- mod$ctl$Q_parms[-grep('env', rownames(mod$ctl$Q_parms)),]
   
   # set forecast F to historic F
-  mod$fore$ForeCatch <- tibble(Year = 101:112,
-                                   Seas = 1,
-                                   Fleet = 1,
-                                   `Catch or F` = stringr::str_extract(df$cf.fvals.1, 
-                                                                       '0.[:digit:]+')) |>
-    as.data.frame()
+  om_dat <- SS_readdat(file.path(sim_dir, 'no_ind', iter, "om", 'data_expval.ss'), 
+                       verbose = FALSE)
+  mod$fore$ForeCatch <- filter(om_dat$catch, year > 100) |>
+    rename(Year = year, Seas = seas, Fleet = fleet,
+           `Catch or F` = catch) |>
+    select(-catch_se)
   mod$fore$FirstYear_for_caps_and_allocations <- 113
-  mod$fore$InputBasis <- 99
 
   # write model and run
   SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
   run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
       exe = exe_loc, verbose = FALSE,
-      # extras = '-nohess', # conducting bias adjustment 
+      # extras = '-nohess', # conducting bias adjustment
       skipfinished = FALSE)
   bias <- ss3sim:::calculate_bias(
     dir = file.path(sim_dir, 'no_ind', iter, 'em'),
@@ -140,8 +145,8 @@ furrr::future_walk(1:nsim, \(iter) {
       extras = '-nohess', 
       skipfinished = FALSE)
   
+  unlink(file.path(sim_dir, 'no_ind', iter, 'em', 'bias_00'), recursive = TRUE)
 })
-
 
 # Run EM under different index SDs ----------------------------------------
 
@@ -170,71 +175,73 @@ furrr::future_walk(1:nsim, \(iter) {
   }
   
   # set forecast F to historic F
-  mod$fore$ForeCatch <- tibble(Year = 101:112,
-                               Seas = 1,
-                               Fleet = 1,
-                               `Catch or F` = stringr::str_extract(df$cf.fvals.1, 
-                                                                   '0.[:digit:]+')) |>
-    as.data.frame()
+  om_dat <- SS_readdat(file.path(sim_dir, 'base', iter, "om", 'data_expval.ss'), 
+                       verbose = FALSE)
+  mod$fore$ForeCatch <- filter(om_dat$catch, year > 100) |>
+    rename(Year = year, Seas = seas, Fleet = fleet,
+           `Catch or F` = catch) |>
+    select(-catch_se)
   mod$fore$FirstYear_for_caps_and_allocations <- 113
-  mod$fore$InputBasis <- 99
-  
+
   seed <- sample(100000000, 1)
   # now sample survey index across new SDs
-  purrr::walk(sd_seq, \(sd) {
+  purrr::walk(sd_seq, \(s.d) {
     # ensure same seed for all SEs per iteration
     set.seed(seed)
     tmp_dat <- sample_index(mod$dat, fleets = rec_flt_ind, 
                             years = list(rec_yrs), 
-                            sds_obs = list(sd))
+                            sds_obs = list(s.d))
     mod$dat$CPUE[mod$dat$CPUE$index == rec_flt_ind,] <- tmp_dat$CPUE
     
     # copy OM, write model and run
-    dir.create(file.path(sim_dir, sd, iter))
+    dir.create(file.path(sim_dir, s.d, iter))
     file.copy(from = file.path(sim_dir, 'base', iter, 'om'),
-              to = file.path(sim_dir, sd, iter), 
+              to = file.path(sim_dir, s.d, iter), 
               recursive = TRUE, overwrite = TRUE)
-    SS_write(mod, file.path(sim_dir, sd, iter, 'em'), overwrite = TRUE)
-    run(dir = file.path(sim_dir, sd, iter, 'em'),
+    SS_write(mod, file.path(sim_dir, s.d, iter, 'em'), overwrite = TRUE)
+    run(dir = file.path(sim_dir, s.d, iter, 'em'),
         exe = exe_loc, verbose = FALSE,
         # extras = '-nohess', 
         skipfinished = FALSE)
     bias <- ss3sim:::calculate_bias(
-      dir = file.path(sim_dir, sd, iter, 'em'),
+      dir = file.path(sim_dir, s.d, iter, 'em'),
       ctl_file_in = "em.ctl"
     )
-    run(dir = file.path(sim_dir, sd, iter, 'em'),
+    run(dir = file.path(sim_dir, s.d, iter, 'em'),
         exe = exe_loc, verbose = FALSE,
         extras = '-nohess', 
         skipfinished = FALSE)
-    
+    unlink(file.path(sim_dir, s.d, iter, 'em', 'bias_00'), recursive = TRUE)
   })
 }, .options = furrr::furrr_options(seed = 5890238))
 
+
 # 0.1 index but only last 3 yrs ----------------------------------------------------
-
-dir.create(file.path(sim_dir, '0.1_end_yrs_only'))
-
-furrr::future_walk(1:nsim, \(iter) {
-  # copy files, read in EM
-  file.copy(from = file.path(sim_dir, '0.1', iter),
-            to = file.path(sim_dir, '0.1_end_yrs_only'), 
-            recursive = TRUE, overwrite = TRUE)
-  mod <- SS_read(file.path(sim_dir, '0.1_end_yrs_only', iter, 'em'))
-  
-  # remove index
-  mod$dat$CPUE <- filter(mod$dat$CPUE, year > 97 | index == 2)
-  
-  # write model and run
-  SS_write(mod, file.path(sim_dir, '0.1_end_yrs_only', iter, 'em'), overwrite = TRUE)
-  run(dir = file.path(sim_dir, '0.1_end_yrs_only', iter, 'em'),
-      exe = exe_loc, verbose = FALSE,
-      extras = '-nohess', skipfinished = FALSE)
-})
+# 
+# dir.create(file.path(sim_dir, '0.1_end_yrs_only'))
+# 
+# furrr::future_walk(1:nsim, \(iter) {
+#   # copy files, read in EM
+#   file.copy(from = file.path(sim_dir, '0.1', iter),
+#             to = file.path(sim_dir, '0.1_end_yrs_only'), 
+#             recursive = TRUE, overwrite = TRUE)
+#   mod <- SS_read(file.path(sim_dir, '0.1_end_yrs_only', iter, 'em'))
+#   
+#   # remove index
+#   mod$dat$CPUE <- filter(mod$dat$CPUE, year > 97 | index == 2)
+#   
+#   # write model and run
+#   SS_write(mod, file.path(sim_dir, '0.1_end_yrs_only', iter, 'em'), overwrite = TRUE)
+#   run(dir = file.path(sim_dir, '0.1_end_yrs_only', iter, 'em'),
+#       exe = exe_loc, verbose = FALSE,
+#       extras = '-nohess', skipfinished = FALSE)
+# })
 
 tictoc::toc()
 
 tictoc::tic()
-sim_res <- get_results_all(directory = sim_dir, user_scenarios = c(0.05, 0.1, 0.2, 0.3, 0.5, 'no_ind'),
+sim_res <- get_results_all(directory = sim_dir, 
+                           user_scenarios = c(0.05, 0.1, 0.2, 0.3, 0.5, 'no_ind'),
                            overwrite_files = TRUE)
 tictoc::toc()
+

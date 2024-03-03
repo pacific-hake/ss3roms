@@ -464,7 +464,7 @@ next read 4 values for:  control rule shape(0, 1, 2, 3 or 4), inflection (like 0
 2  # echoed HarvestPolicy 
 0.4   # echoed control rule inflection (-1 to set to Bmsy/SSB_unf)
 0.01   # echoed control rule cutoff 
-0   # echoed control rule scalar 
+1   # echoed control rule scalar 
 
 # next enter 2 values that control looping through the forecast (see manual), then 3 additional controls
 # first does F_msy or proxy; 2nd applies control rule; 3rd applies caps and allocations
@@ -514,7 +514,7 @@ fishing fleets not assigned to allocation group are processed normally
 # yr seas fleet catch
  -9999 0 0 0
 fill H4010_scale_vec with single input
-H4010_scale:  0
+H4010_scale:  1
  done reading forecast 
 
 SPR_reporting 4
