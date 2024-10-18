@@ -28,9 +28,24 @@ inst/extdata/models/retrospectives/*
 *.png
 *.exe
 sims/*/*.csv
-
 # ss3 files
 sims/*/*
 sims_low_n/*/*
 bias_adjust/*/*
 !bias_adjust/*/1
+petrale/*/*
+petrale/*/*.csv
+ss3.b*
+ss3.log
+ss3.p*
+ss3.r*
+*.ss_new
+varssave.tmp
+runnumber.ss
+echoinput.sso
+fmin.log
+ParmTrace.sso
+console.output.txt
+ss_summary.sso
+gradfil*.tmp
+cmpdiff.tmp

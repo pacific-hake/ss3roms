@@ -1,5 +1,12 @@
 library(ggplot2)
 
+om_dat <- SS_readdat(file.path(sim_dir, 'base', iter, "om", 'data_expval.ss'), 
+                     verbose = FALSE)
+ForeCatch <- filter(om_dat$catch, year > 100) |>
+  rename(Year = year, Seas = seas, Fleet = fleet,
+         `Catch or F` = catch) |>
+  select(-catch_se)
+
 out.1 <- SS_output(here('bias_adjust/0.1/1/em'), 
                    printstats = FALSE, verbose = FALSE) 
 

@@ -1,0 +1,10 @@
+Note 1 Information: Max data length bin: 62  < max pop len bins: 78; so will accumulate larger pop len bins
+Warning 1 : At least one block pattern ends in endyr. Check the output parameter value time series to see if the values in forecast years are as intended.
+Note 2 Suggestion: Recruitment survey: 5 has data in: 0, which is before first early recdev: 1905. Suggest start recdevs earlier
+Warning 2 : fleet: 1 lencomp has N obs with partition==2 (retained); changed to partition=0 because retention not defined; N= 65
+Warning 3 Adjustment: Fleet: 1  agecomp has N obs with partition==2 (retained); changed to partition=0 because retention not defined; N= 89
+Warning 4 : fleet: 2 lencomp has N obs with partition==2 (retained); changed to partition=0 because retention not defined; N= 54
+Warning 5 Adjustment: Fleet: 2  agecomp has N obs with partition==2 (retained); changed to partition=0 because retention not defined; N= 37
+Note 3 Information: A revised protocol for the Fcast_yr specification is available and recommended.
+Note 4 Information:  N parameters that are on or within 1% of min-max bound: 1; check results, variance may be suspect
+ 5 warnings  and 4 notes 

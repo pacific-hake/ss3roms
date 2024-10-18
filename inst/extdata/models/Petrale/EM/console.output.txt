@@ -1,7 +1,0 @@
-###
-console output
-2024-02-07 17:30:17.312319
-###
- 
- reading from starter.ss
-Error trying to open data input file ss3.dat

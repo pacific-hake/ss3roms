@@ -1,7 +1,6 @@
 Note 1 Information: Max data length bin: 62  < max pop len bins: 78; so will accumulate larger pop len bins
-Warning 1 : no discard amount data for fleet 1  but retention parms have been defined 
-Warning 2 : no discard amount data for fleet 2  but retention parms have been defined 
-Warning 3 : 1st iteration warning: ssb(endyr)/ssb(styr)= 0.00197736; suggest start with larger R0 to get near 0.4; or use depletion fleet option
-Warning 4 : 1st iteration warning: catch logL > 50% total logL; check configuration; suggest start with larger R0
-Warning 5 : Main recdev biasadj is >2 times ratio of rmse to sigmaR
- 5 warnings  and 1 note 
+Warning 1 : At least one block pattern ends in endyr. Check the output parameter value time series to see if the values in forecast years are as intended.
+Warning 2 : fleet: 1 lencomp has N obs with partition==2 (retained); changed to partition=0 because retention not defined; N= 65
+Warning 3 Adjustment: Fleet: 1  agecomp has N obs with partition==2 (retained); changed to partition=0 because retention not defined; N= 89
+Warning 4 : fleet: 2 lencomp has N obs with partition==2 (retained); changed to partition=0 because retention not defined; N= 54
+Warning 5 Adjustment: Fleet: 2  agecomp has N obs with partition==2 (retained); changed to partition=0 because retention not defined; N= 37
