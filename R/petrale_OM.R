@@ -61,7 +61,7 @@ mod$ctl$Variance_adjustment_list <- mod$ctl$Variance_adjustment_list[-(1:nrow(mo
 # # data bins: 12-62 cm, 2004-2022, minus 2020
 # full_caal <- expand.grid(lbin = seq(12, 62, 2), yr = c(2004:2019, 2021:2022)) 
 # obs_caal <- mod$dat$agecomp |>
-#   dplyr::filter(FltSvy == 4) |>
+#   dplyr::filter(fleet == 4) |>
 #   dplyr::select(Yr:Nsamp)
 
 # start model in 1923, few catches before then
@@ -88,7 +88,7 @@ mod$ctl$size_selex_parms <- mod$ctl$size_selex_parms[-grep('Triennial', rownames
 mod$ctl$Q_options <- mod$ctl$Q_options[rownames(mod$ctl$Q_options) != 'Triennial',]
 mod$ctl$Q_parms <- mod$ctl$Q_parms[-grep('Triennial', rownames(mod$ctl$Q_parms)),]
 mod$dat$CPUE <- dplyr::filter(mod$dat$CPUE, index != 3)
-mod$dat$lencomp <- dplyr::filter(mod$dat$lencomp, FltSvy != 3)
+mod$dat$lencomp <- dplyr::filter(mod$dat$lencomp, fleet != 3)
 # Triennial did not collect age structures for petrale
 
 # add environmental index fleet
@@ -101,9 +101,9 @@ petrale.env$datlist$fleetinfo1$env <- c(1,1,3)
 petrale.env$datlist$fleetinfo2$env <- c(2,0)
 
 petrale.env$ctllist$Q_options['env','extra_se'] <- 0
-petrale.env$ctllist$Q_parms <- petrale.env$ctllist$Q_parms[-grep('extraSD_env', rownames(petrale.env$ctllist$Q_parms)),]
 # Q for env index must be estimated, not float
 petrale.env$ctllist$Q_options['env','float'] <- 0
+petrale.env$ctllist$Q_parms <- petrale.env$ctllist$Q_parms[-grep('extraSD_env', rownames(petrale.env$ctllist$Q_parms)),]
 # Q is actually on a linear scale, not log scale, despite parameter name
 petrale.env$ctllist$Q_parms['LnQ_base_env(5)', 'LO'] <- 0.001 # this is actually q for index type 36, and must be >0
 petrale.env$ctllist$Q_parms['LnQ_base_env(5)', 'INIT'] <- 1
@@ -121,10 +121,10 @@ mod$ctl$size_selex_types$Male <- 0
 mod$ctl$MG_parms <- mod$ctl$MG_parms[-grep('Mal', rownames(mod$ctl$MG_parms)),]
 mod$ctl$size_selex_parms <- mod$ctl$size_selex_parms[-grep('MalOff', rownames(mod$ctl$size_selex_parms)),]
 mod$dat$Nsexes <- 1
-mod$dat$lencomp$Gender <- 0
+mod$dat$lencomp$sex <- 0
 mod$dat$lencomp <- select(mod$dat$lencomp, -(m12:m62))
-mod$dat$agecomp <- filter(mod$dat$agecomp, Gender != 2) |>
-  mutate(Gender = 0) |>
+mod$dat$agecomp <- filter(mod$dat$agecomp, sex != 2) |>
+  mutate(sex = 0) |>
   select(-(m1:m17))
 
 # prepare data file for sampling CAAL data
@@ -132,7 +132,7 @@ mod$dat$agecomp <- filter(mod$dat$agecomp, Gender != 2) |>
 # 
 # agecomp_long <- expand.grid(Yr = unique(agecomp$Yr[agecomp$Lbin_hi > 0]),
 #             Lbin_hi = seq(12, 62, by = 2)) |> 
-#   dplyr::mutate(FltSvy = 4, Part = 0, Ageerr = 2, Lbin_lo = Lbin_hi, Nsamp = 1,
+#   dplyr::mutate(fleet = 4, Part = 0, Ageerr = 2, Lbin_lo = Lbin_hi, Nsamp = 1,
 #                 Gender = 0, f1 = 1) |>
 #   dplyr::arrange(Yr) |> 
 #   full_join(agecomp) |> 
@@ -167,20 +167,23 @@ SS_write(em, 'inst/extdata/models/petrale/EM', overwrite = TRUE)
 out <- SS_output('inst/extdata/models/petrale/production', printstats = FALSE, verbose = FALSE)
 prod_mod <- SS_read('inst/extdata/models/petrale/production')
 agecomp_simple <- prod_mod$dat$agecomp |>
-  dplyr::group_by(FltSvy, Yr) |>
+  dplyr::group_by(fleet, year) |>
   dplyr::summarise(Nsamp = sum(Nsamp)) |>
-  dplyr::filter(FltSvy > 0)
+  dplyr::filter(fleet > 0)
 
 lencomp_simple <- prod_mod$dat$lencomp |>
-  dplyr::group_by(FltSvy, Yr) |>
+  dplyr::group_by(fleet, year) |>
   dplyr::summarise(Nsamp = sum(Nsamp)) |>
-  dplyr::filter(FltSvy > 0)
+  dplyr::filter(fleet > 0)
 
 df <- setup_scenarios_defaults()
 df$cf.years.1 <- '1923:2022'
 df$cf.years.2 <- '1923:2022'
-df$cf.fvals.1 <- 'c(rep(0, 15), seq(0, 0.5, length.out = 40), rep(0.5, 30), rep(0.3, 15))'
-df$cf.fvals.2 <- 'c(rep(0, 20), rep(0.15, 80))'
+# lower fishing scenario
+# df$cf.fvals.1 <- 'c(rep(0, 15), seq(0, 0.5, length.out = 40), rep(0.5, 30), rep(0.3, 15))'
+# df$cf.fvals.2 <- 'c(rep(0, 20), rep(0.15, 80))'
+
+# empirical fishing scenario
 df$cf.fvals.1 <- c('c(NULL', out$exploitation$North[out$exploitation$Yr %in% 1923:2022], ')') |> 
   stringr::str_flatten_comma(last = '')
 df$cf.fvals.2 <- c('c(NULL', out$exploitation$South[out$exploitation$Yr %in% 1923:2022], ')') |> 
@@ -190,17 +193,17 @@ df$cf.fvals.2 <- c('c(NULL', out$exploitation$South[out$exploitation$Yr %in% 192
 # some of these are sexed and some are not.
 # production model contains sex = 0 and sex = 3 for same fleet in some years
 # lengths of these vectors do not match!
-df$sl.years.1 <- c('c(NULL', lencomp_simple$Yr[lencomp_simple$FltSvy == 1], ')') |>
+df$sl.years.1 <- c('c(NULL', lencomp_simple$year[lencomp_simple$fleet == 1], ')') |>
   stringr::str_flatten_comma(last = '')
-df$sl.Nsamp.1 <- { lencomp_simple$Nsamp[lencomp_simple$FltSvy == 1] * 
+df$sl.Nsamp.1 <- { lencomp_simple$Nsamp[lencomp_simple$fleet == 1] * 
     dplyr::filter(prod_mod$ctl$Variance_adjustment_list, Fleet == 1, Data_type == 4)[,'Value']
   } |> 
   round() %>%
   c('c(NULL', ., ')') |>
   stringr::str_flatten_comma(last = '')
-df$sl.years.2 <- c('c(NULL', lencomp_simple$Yr[lencomp_simple$FltSvy == 2], ')') |>
+df$sl.years.2 <- c('c(NULL', lencomp_simple$year[lencomp_simple$fleet == 2], ')') |>
   stringr::str_flatten_comma(last = '')
-df$sl.Nsamp.2 <- { lencomp_simple$Nsamp[lencomp_simple$FltSvy == 2] * 
+df$sl.Nsamp.2 <- { lencomp_simple$Nsamp[lencomp_simple$fleet == 2] * 
     dplyr::filter(prod_mod$ctl$Variance_adjustment_list, Fleet == 2, Data_type == 4)[,'Value']
 } |> 
   round() %>%
@@ -208,17 +211,17 @@ df$sl.Nsamp.2 <- { lencomp_simple$Nsamp[lencomp_simple$FltSvy == 2] *
   stringr::str_flatten_comma(last = '')
 
 # fishery dependent ages
-df$sa.years.1 <- c('c(NULL', agecomp_simple$Yr[agecomp_simple$FltSvy == 1], ')') |>
+df$sa.years.1 <- c('c(NULL', agecomp_simple$year[agecomp_simple$fleet == 1], ')') |>
   stringr::str_flatten_comma(last = '')
-df$sa.Nsamp.1 <- { agecomp_simple$Nsamp[agecomp_simple$FltSvy == 1] * 
+df$sa.Nsamp.1 <- { agecomp_simple$Nsamp[agecomp_simple$fleet == 1] * 
     dplyr::filter(prod_mod$ctl$Variance_adjustment_list, Fleet == 1, Data_type == 5)[,'Value']
 } |> 
   round() %>%
   c('c(NULL', ., ')') |>
   stringr::str_flatten_comma(last = '')
-df$sa.years.2 <- c('c(NULL', agecomp_simple$Yr[agecomp_simple$FltSvy == 2], ')') |>
+df$sa.years.2 <- c('c(NULL', agecomp_simple$year[agecomp_simple$fleet == 2], ')') |>
   stringr::str_flatten_comma(last = '')
-df$sa.Nsamp.2 <- { agecomp_simple$Nsamp[agecomp_simple$FltSvy == 2] * 
+df$sa.Nsamp.2 <- { agecomp_simple$Nsamp[agecomp_simple$fleet == 2] * 
     dplyr::filter(prod_mod$ctl$Variance_adjustment_list, Fleet == 2, Data_type == 5)[,'Value']
 } |> 
   round() %>%
@@ -232,9 +235,9 @@ df$si.sds_obs.4 <- 0.075
 df$si.seas.4 <- 1
 
 # lengths from triennial (assign to WCGBTS for simplicity)
-df$sl.years.4 <- c('c(NULL', lencomp_simple$Yr[lencomp_simple$FltSvy == 3 & lencomp_simple$Yr != 2004], ')') |>
+df$sl.years.4 <- c('c(NULL', lencomp_simple$year[lencomp_simple$fleet == 3 & lencomp_simple$year != 2004], ')') |>
   stringr::str_flatten_comma(last = '')
-df$sl.Nsamp.4 <- { lencomp_simple$Nsamp[lencomp_simple$FltSvy == 3 & lencomp_simple$Yr != 2004] * 
+df$sl.Nsamp.4 <- { lencomp_simple$Nsamp[lencomp_simple$fleet == 3 & lencomp_simple$year != 2004] * 
     dplyr::filter(prod_mod$ctl$Variance_adjustment_list, Fleet == 3, Data_type == 4)[,'Value']
 } |> 
   round() %>%
@@ -242,14 +245,19 @@ df$sl.Nsamp.4 <- { lencomp_simple$Nsamp[lencomp_simple$FltSvy == 3 & lencomp_sim
   stringr::str_flatten_comma(last = '')
 
 # CAAL from WCGBTS  
-df$sc.years.4 <- c('c(NULL', agecomp_simple$Yr[agecomp_simple$FltSvy == 4], ')') |>
+df$sc.years.4 <- c('c(NULL', agecomp_simple$year[agecomp_simple$fleet == 4], ')') |>
   stringr::str_flatten_comma(last = '')
-df$sc.Nsamp_lengths.4 <- df$sc.Nsamp_ages.4 <- { lencomp_simple$Nsamp[lencomp_simple$FltSvy == 4] * 
+df$sc.Nsamp_lengths.4 <- df$sc.Nsamp_ages.4 <- { lencomp_simple$Nsamp[lencomp_simple$fleet == 4] * 
     dplyr::filter(prod_mod$ctl$Variance_adjustment_list, Fleet == 4, Data_type == 4)[,'Value']
 } |> 
   round() %>%
   c('c(NULL', ., ')') |>
   stringr::str_flatten_comma(last = '')
+
+# recruitment index
+df$si.years.5 <- 'c(2018:2022)'
+df$si.seas.5 <- 1
+df$si.sds_obs.5 <- 0.1
 
 df <- dplyr::select(df, -si.years.2, -si.sds_obs.2, -si.seas.2)
 
@@ -259,16 +267,25 @@ df$bias_adjust <- FALSE
 
 nsim <- 1
 sim_dir <- 'petrale'
+ncore <- parallelly::availableCores()
+# cl <- makeCluster(ncore - 1)
+# registerDoParallel(cl)
 set.seed(52890)
 
-unlink('petrale/1', recursive = TRUE)
+unlink('petrale', recursive = TRUE)
+tictoc::tic()
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
+                     # parallel = TRUE, parallel_iterations = TRUE,
                      parallel = FALSE, parallel_iterations = FALSE,
                      scenarios = file.path(sim_dir))
 
+tictoc::toc()
+beepr::beep()
+stopCluster(cl)
+
 file.copy(exe_loc, 'petrale/1/ss3.exe')
-bad_out <- SS_output('petrale/1/em')
-SS_plots(bad_out, plot = )
+
+rec_flt_ind <- 5
 
 # Comp data
 # If I use existing EM data weights, I think I can just use multinomial distribution.
