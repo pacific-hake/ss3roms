@@ -142,9 +142,9 @@ tictoc::toc()
 stopCluster(cl)
 beepr::beep()
 
-# file.copy(exe_loc, 'petrale/1/ss3.exe')
-# bad_out <- SS_output('petrale/1/em')
-# SS_plots(bad_out)
+file.copy(exe_loc, 'petrale/1/ss3.exe')
+bad_out <- SS_output('petrale/0.1/1/em')
+SS_plots(bad_out)
 
 
 
@@ -265,8 +265,9 @@ furrr::future_walk(1:nsim, \(iter) {
 
 
 tictoc::tic()
+plan(sequential)
 sim_res <- get_results_all(directory = sim_dir, 
-                           user_scenarios = c(0.05, 0.1),#, 0.2, 0.3, 0.5, 'no_ind'),
+                           user_scenarios = c(0.05, 0.1, 0.2, 0.3, 0.5, 'no_ind'),
                            overwrite_files = TRUE)
 tictoc::toc()
 
