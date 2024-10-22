@@ -4,7 +4,7 @@
 #C file write time: 2015-04-27 21:23:15
 #
 1923 #_styr
-2022 #_endyr
+2034 #_endyr
 1 #_nseas
 12 #_months_per_seas
 2 #_Nsubseasons
@@ -351,7 +351,7 @@
  2019	7	4	43739.2	 0.103103	#_17        
  2021	7	4	50087.9	0.0748768	#_18        
  2022	7	4	51429.8	0.0779429	#_19        
- 2022	7	5	      1	      0.1	#_20        
+ 2034	7	5	      1	      0.1	#_20        
 -9999	0	0	      0	        0	#_terminator
 0 #_N_discard_fleets
 #_discard_units (1=same_as_catchunits(bio/num); 2=fraction; 3=numbers)

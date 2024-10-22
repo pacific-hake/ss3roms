@@ -88,6 +88,7 @@ df$cf.fvals.1 <- 'rep(0.1052, 87)'
 df$om_dir <- 'inst/extdata/models/Cod/OM'
 df$em_dir <- 'inst/extdata/models/Cod/EM'
 df$bias_adjust <- FALSE
+rec_flt_ind <- 3
 
 tictoc::tic()
 ncore <- parallelly::availableCores()
@@ -99,10 +100,9 @@ set.seed(52890)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
                      parallel = TRUE, parallel_iterations = TRUE,
-                     scenarios = file.path(sim_dir, df$si.sds_obs.3))
+                     scenarios = file.path(sim_dir, df[,paste0('si.sds_obs.', rec_flt_ind)]))
 stopCluster(cl)
 
-rec_flt_ind <- 3
 
 # Run EM without index ----------------------------------------------------
 
@@ -124,11 +124,11 @@ furrr::future_walk(1:nsim, \(iter) {
   # set forecast F to historic F
   om_dat <- SS_readdat(file.path(sim_dir, 'no_ind', iter, "om", 'data_expval.ss'), 
                        verbose = FALSE)
-  mod$fore$ForeCatch <- filter(om_dat$catch, year > 100) |>
+  mod$fore$ForeCatch <- filter(om_dat$catch, year > (om_dat$endyr-12)) |>
     rename(Year = year, Seas = seas, Fleet = fleet,
            `Catch or F` = catch) |>
     select(-catch_se)
-  mod$fore$FirstYear_for_caps_and_allocations <- 113
+  mod$fore$FirstYear_for_caps_and_allocations <- om_dat$endyr + 1
 
   # write model and run
   SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
@@ -177,11 +177,11 @@ furrr::future_walk(1:nsim, \(iter) {
   # set forecast F to historic F
   om_dat <- SS_readdat(file.path(sim_dir, 'base', iter, "om", 'data_expval.ss'), 
                        verbose = FALSE)
-  mod$fore$ForeCatch <- filter(om_dat$catch, year > 100) |>
+  mod$fore$ForeCatch <- filter(om_dat$catch, year > (om_dat$endyr-12)) |>
     rename(Year = year, Seas = seas, Fleet = fleet,
            `Catch or F` = catch) |>
     select(-catch_se)
-  mod$fore$FirstYear_for_caps_and_allocations <- 113
+  mod$fore$FirstYear_for_caps_and_allocations <- om_dat$endyr + 1
 
   seed <- sample(100000000, 1)
   # now sample survey index across new SDs
