@@ -75,7 +75,7 @@ df <- setup_scenarios_defaults()
 # df$sa.Nsamp.2 <- 50
   
 # rec index
-df$si.years.3 <- '70:100'
+df$si.years.3 <- '90:100'
 df$si.sds_obs.3 <- 0.1
 df$si.seas.3 <- 1
 
@@ -95,7 +95,7 @@ ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
 nsim <- 100
-sim_dir <- 'bias_adjust'
+sim_dir <- 'cod_10'
 set.seed(52890)
 
 scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
@@ -132,7 +132,7 @@ furrr::future_walk(1:nsim, \(iter) {
 
   # write model and run
   SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
-  run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
+  r4ss::run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
       exe = exe_loc, verbose = FALSE,
       # extras = '-nohess', # conducting bias adjustment
       skipfinished = FALSE)
@@ -140,7 +140,7 @@ furrr::future_walk(1:nsim, \(iter) {
     dir = file.path(sim_dir, 'no_ind', iter, 'em'),
     ctl_file_in = "em.ctl"
   )
-  run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
+  r4ss::run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
       exe = exe_loc, verbose = FALSE,
       extras = '-nohess', 
       skipfinished = FALSE)
@@ -199,7 +199,7 @@ furrr::future_walk(1:nsim, \(iter) {
               to = file.path(sim_dir, s.d, iter), 
               recursive = TRUE, overwrite = TRUE)
     SS_write(mod, file.path(sim_dir, s.d, iter, 'em'), overwrite = TRUE)
-    run(dir = file.path(sim_dir, s.d, iter, 'em'),
+    r4ss::run(dir = file.path(sim_dir, s.d, iter, 'em'),
         exe = exe_loc, verbose = FALSE,
         # extras = '-nohess', 
         skipfinished = FALSE)
@@ -207,7 +207,7 @@ furrr::future_walk(1:nsim, \(iter) {
       dir = file.path(sim_dir, s.d, iter, 'em'),
       ctl_file_in = "em.ctl"
     )
-    run(dir = file.path(sim_dir, s.d, iter, 'em'),
+    r4ss::run(dir = file.path(sim_dir, s.d, iter, 'em'),
         exe = exe_loc, verbose = FALSE,
         extras = '-nohess', 
         skipfinished = FALSE)

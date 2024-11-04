@@ -32,6 +32,7 @@ sims/*/*.csv
 sims/*/*
 sims_low_n/*/*
 bias_adjust/*/*
+cod_10/*/*
 !bias_adjust/*/1
 petrale/*/*
 petrale/*/*.csv
@@ -49,3 +50,4 @@ console.output.txt
 ss_summary.sso
 gradfil*.tmp
 cmpdiff.tmp
+petrale_10
