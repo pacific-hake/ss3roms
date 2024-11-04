@@ -108,7 +108,7 @@ df$sc.Nsamp_lengths.4 <- df$sc.Nsamp_ages.4 <- { lencomp_simple$Nsamp[lencomp_si
   stringr::str_flatten_comma(last = '')
 
 #### recruitment index
-df$si.years.5 <- '2002:2022'
+df$si.years.5 <- '1993:2022'
 df$si.sds_obs.5 <- 0.1
 df$si.seas.5 <- 1
 
@@ -117,24 +117,24 @@ df <- dplyr::select(df, -si.years.2, -si.sds_obs.2, -si.seas.2)
 
 df$om_dir <- 'inst/extdata/models/Petrale/OM'
 df$em_dir <- 'inst/extdata/models/Petrale/EM'
-df$bias_adjust <- FALSE
 rec_flt_ind <- 5
 
 
 # Do OM runs, sample data -------------------------------------------------
 
-nsim <- 2
-sim_dir <- 'petrale'
+nsim <- 100
+sim_dir <- 'petrale_30'
 set.seed(52890)
+df$bias_adjust <- FALSE
 
-unlink('petrale', recursive = TRUE)
+# unlink('petrale', recursive = TRUE)
 
 ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
 
 tictoc::tic()
-scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess -maxfn 0', 
+scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
                      parallel = TRUE, parallel_iterations = TRUE,
                      scenarios = file.path(sim_dir, df[,paste0('si.sds_obs.', rec_flt_ind)]))
 
@@ -142,9 +142,9 @@ tictoc::toc()
 stopCluster(cl)
 beepr::beep()
 
-file.copy(exe_loc, 'petrale/1/ss3.exe')
-bad_out <- SS_output('petrale/0.1/1/em')
-SS_plots(bad_out)
+# file.copy(exe_loc, 'petrale/1/ss3.exe')
+# bad_out <- SS_output('petrale/0.1/1/em')
+# SS_plots(bad_out)
 
 
 
@@ -178,21 +178,22 @@ furrr::future_walk(1:nsim, \(iter) {
   suppressWarnings(
     SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
   ) # suppresses warnings about par file name.
-  # run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
-  #     exe = exe_loc, verbose = FALSE,
-  #     # extras = '-nohess', # conducting bias adjustment
-  #     skipfinished = FALSE)
-  # bias <- ss3sim:::calculate_bias(
-  #   dir = file.path(sim_dir, 'no_ind', iter, 'em'),
-  #   ctl_file_in = "em.ctl"
-  # )
-  run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
+  r4ss::run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
+      exe = exe_loc, verbose = FALSE,
+      # extras = '-nohess', # conducting bias adjustment
+      skipfinished = FALSE)
+  bias <- ss3sim:::calculate_bias(
+    dir = file.path(sim_dir, 'no_ind', iter, 'em'),
+    ctl_file_in = "em.ctl"
+  )
+  r4ss::run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
       exe = exe_loc, verbose = FALSE,
       extras = '-nohess', 
       skipfinished = FALSE)
   
   # unlink(file.path(sim_dir, 'no_ind', iter, 'em', 'bias_00'), recursive = TRUE)
 })
+beepr::beep()
 
 # Run EM under different index SDs ----------------------------------------
 
@@ -247,15 +248,15 @@ furrr::future_walk(1:nsim, \(iter) {
     suppressWarnings(
       SS_write(mod, file.path(sim_dir, s.d, iter, 'em'), overwrite = TRUE)
     ) # suppresses parfile warnings
-    # run(dir = file.path(sim_dir, s.d, iter, 'em'),
-    #     exe = exe_loc, verbose = FALSE,
-    #     # extras = '-nohess', 
-    #     skipfinished = FALSE)
-    # bias <- ss3sim:::calculate_bias(
-    #   dir = file.path(sim_dir, s.d, iter, 'em'),
-    #   ctl_file_in = "em.ctl"
-    # )
-    run(dir = file.path(sim_dir, s.d, iter, 'em'),
+    r4ss::run(dir = file.path(sim_dir, s.d, iter, 'em'),
+        exe = exe_loc, verbose = FALSE,
+        # extras = '-nohess',
+        skipfinished = FALSE)
+    bias <- ss3sim:::calculate_bias(
+      dir = file.path(sim_dir, s.d, iter, 'em'),
+      ctl_file_in = "em.ctl"
+    )
+    r4ss::run(dir = file.path(sim_dir, s.d, iter, 'em'),
         exe = exe_loc, verbose = FALSE,
         extras = '-nohess', 
         skipfinished = FALSE)
@@ -263,6 +264,7 @@ furrr::future_walk(1:nsim, \(iter) {
   })
 }, .options = furrr::furrr_options(seed = 5890238))
 
+beepr::beep()
 
 tictoc::tic()
 plan(sequential)
