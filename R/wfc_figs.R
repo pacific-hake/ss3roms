@@ -215,3 +215,77 @@ scalar |>
   theme(legend.position = 'none') +
   labs(x = 'Index SE', y = 'Relative error of unfished recruitment')
 ggsave('wfc_figs/r0.png', device = 'png', width = 8, height = 4, dpi = 500)
+
+
+# Empirical petrale results -----------------------------------------------
+file.copy(exe_loc, 'inst/extdata/models/petrale/klo_env_runs')
+out1 <- SS_output('inst/extdata/models/petrale/klo_env_runs/est_q')
+copy_SS_inputs('inst/extdata/models/petrale/klo_env_runs/est_q', 'inst/extdata/models/petrale/klo_env_runs/est_q_bias_adj')
+SS_fitbiasramp(out1, oldctl = 'inst/extdata/models/petrale/klo_env_runs/est_q_bias_adj/petrale_control.ss',
+               newctl = 'inst/extdata/models/petrale/klo_env_runs/est_q_bias_adj/petrale_control.ss')
+
+copy_SS_inputs('inst/extdata/models/petrale/klo_env_runs/est_q_10yr', 'inst/extdata/models/petrale/klo_env_runs/est_q_10yr_bias_adj')
+SS_fitbiasramp(out1, oldctl = 'inst/extdata/models/petrale/klo_env_runs/est_q_10yr_bias_adj/petrale_control.ss',
+               newctl = 'inst/extdata/models/petrale/klo_env_runs/est_q_10yr_bias_adj/petrale_control.ss')
+
+
+dirs <- sapply(c('production', 'klo_env_runs/est_q_bias_adj', 'klo_env_runs/est_q_10yr_bias_adj'),
+               \(x) file.path('inst/extdata/models/petrale', x)) |>
+  `names<-`(NULL) %>%
+  r4ss::SSgetoutput(dirvec = ., getcovar = FALSE, getcomp = FALSE, verbose = FALSE) |>
+  r4ss::SSsummarize()
+
+SStableComparisons(out, modelnames = c('base', 'env', 'env_10yr'), 
+                   names = c("Recr_Virgin", "R0", "NatM", "L_at_Amax", "VonBert_K", "SSB_Virg", 
+                             "Bratio_2023", "SPRratio_2022", "OFLCatch_2023")) |>
+  write.csv('inst/extdata/models/petrale/klo_env_runs/comparison_table.csv', row.names = FALSE)
+
+ssb <- out$SpawnBio |>
+  rename(Base = replist1, Env = replist2, Env_10yr = replist3) |>
+  tidyr::pivot_longer(cols = Base:Env_10yr, names_to = 'Model', values_to = 'value') |>
+  ggplot() +
+  geom_rect(aes(ymax = max(value)), xmin = 2022.5, xmax = 2034, ymin = 0, fill = 'gray90') +
+  geom_line(aes(x = Yr, y = value, col = Model), linewidth = 1) +
+  labs(x = 'Year', y = 'Spawning Output') +
+  theme(legend.position = 'none') +
+  scale_color_manual(values = inauguration::inauguration('inauguration_2021', n = 3))
+
+depl <- out$Bratio |>
+  rename(Base = replist1, Env = replist2, Env_10yr = replist3) |>
+  tidyr::pivot_longer(cols = Base:Env_10yr, names_to = 'Model', values_to = 'value') |>
+  ggplot() +
+  geom_rect(aes(ymax = max(value)), xmin = 2022.5, xmax = 2034, ymin = 0, fill = 'gray90') +
+  geom_line(aes(x = Yr, y = value, col = Model), linewidth = 1) +
+  labs(x = 'Year', y = 'Spawning Depletion') +
+  scale_color_manual(values = inauguration::inauguration('inauguration_2021', n = 3))
+
+recdev <- out$recdevs |>
+  rename(Base = replist1, Env = replist2, Env_10yr = replist3) |>
+  tidyr::pivot_longer(cols = Base:Env_10yr, names_to = 'Model', values_to = 'value') |>
+  filter(grepl('Main', Label) | grepl('Late', Label)) |>
+  ggplot() +
+  geom_rect(aes(ymax = max(value), ymin = min(value)), xmin = 1992.5, xmax = 2022, fill = 'gray90', col = 'black') +
+  geom_rect(aes(ymax = max(value), ymin = min(value)), xmin = 2012.5, xmax = 2022, fill = 'gray70', col = 'black') +
+  geom_line(aes(x = Yr, y = value, col = Model), linewidth = 1) +
+  labs(x = 'Year', y = 'Recruitment Deviation') +
+  scale_color_manual(values = inauguration::inauguration('inauguration_2021', n = 3)) +
+  theme(legend.position = 'none')
+
+recruit <- out$recruits |>
+  rename(Base = replist1, Env = replist2, Env_10yr = replist3) |>
+  tidyr::pivot_longer(cols = Base:Env_10yr, names_to = 'Model', values_to = 'value') |>
+  filter(Yr %in% 1959:2022) |>
+  ggplot() +
+  geom_rect(aes(ymax = max(value), ymin = min(value)), xmin = 1992.5, xmax = 2022, fill = 'gray90', col = 'black') +
+  geom_rect(aes(ymax = max(value), ymin = min(value)), xmin = 2012.5, xmax = 2022, fill = 'gray70', col = 'black') +
+  geom_line(aes(x = Yr, y = value, col = Model), linewidth = 1) +
+  labs(x = 'Year', y = 'Recruitment') +
+  scale_color_manual(values = inauguration::inauguration('inauguration_2021', n = 3))
+
+
+
+gridExtra::grid.arrange(ssb, depl, nrow = 1, widths = c(0.42, 0.58)) |>
+  ggsave(filename = 'inst/extdata/models/petrale/klo_env_runs/timeseries.png', device = 'png', width = 9, height = 4.5, units = 'in', dpi = 500)
+
+gridExtra::grid.arrange(recdev, recruit, nrow = 1, widths = c(0.42, 0.58)) |>
+  ggsave(filename = 'inst/extdata/models/petrale/klo_env_runs/recruitment.png', device = 'png', width = 9, height = 4.5, units = 'in', dpi = 500)
