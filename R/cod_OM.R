@@ -239,6 +239,7 @@ furrr::future_walk(1:nsim, \(iter) {
 
 tictoc::toc()
 
+future::plan(future::sequential)
 tictoc::tic()
 sim_res <- get_results_all(directory = sim_dir, 
                            user_scenarios = c(0.05, 0.1, 0.2, 0.3, 0.5, 'no_ind'),
