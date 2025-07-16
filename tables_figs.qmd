@@ -1,0 +1,120 @@
+---
+title: "TITLE"
+format: docx
+---
+
+```{r}
+library(r4ss)
+library(here)
+petrale_om <- SS_read(here('inst/extdata/models/petrale/om'))
+petrale_ctl <- petrale_om$ctl
+cod_om <- SS_read(here('inst/extdata/models/cod/om'))
+cod_ctl <- cod_om$ctl
+```
+
+# Tables
+
+```{r}
+par_names <- c('Steepness ($h$)',
+               'log of unfished recruitment ($\\log(R_0)$)',
+               'Standard deviation of log-recruitment deviations ($\\sigma_R$)',
+               'Natural mortality ($M$)',
+               'Young age ($A_\\min$)',
+               'Length at young age ($L_{A_\\min}$)',
+               'CV of length at young age ($CV_{A_\\min}$)',
+               'Old age ($A_\\max$)',
+               'Length at old age ($L_{A_\\max}$)',
+               'CV of length at old age ($CV_{A_\\max}$)',
+               'Von Bertalanffy growth rate ($K$)'
+)
+
+nrows <- length(par_names)
+
+om_table <- data.frame(Parameter = par_names, 
+                       c.value = rep(as.character(NA), nrows),
+                       c.est = rep('Fixed', nrows),
+                       p.value = rep(as.character(NA), nrows),
+                       p.est = rep('Fixed', nrows))
+rownames(om_table) <- stringr::str_split(par_names, ' \\(', simplify = TRUE)[,1]
+
+om_table['Steepness', 'c.value'] <- cod_ctl$SR_parms['SR_BH_steep', 'INIT']
+om_table['Steepness', 'p.value'] <- petrale_ctl$SR_parms['SR_BH_steep', 'INIT']
+
+om_table['log of unfished recruitment', 'c.value'] <- cod_ctl$SR_parms['SR_LN(R0)', 'INIT']
+om_table['log of unfished recruitment', 'p.value'] <- round(petrale_ctl$SR_parms['SR_LN(R0)', 'INIT'], 2)
+om_table['log of unfished recruitment', c('c.est', 'p.est')] <- 'Estimated'
+
+om_table['Standard deviation of log-recruitment deviations', 'c.value'] <- cod_ctl$SR_parms['SR_sigmaR', 'INIT']
+om_table['Standard deviation of log-recruitment deviations', 'p.value'] <- petrale_ctl$SR_parms['SR_sigmaR', 'INIT']
+
+om_table['Natural mortality', 'c.value'] <- paste(cod_ctl$MG_parms['NatM_p_1_Fem_GP_1', 'INIT'], 'yr$^{-1}$')
+om_table['Natural mortality', 'p.value'] <- paste(round(petrale_ctl$MG_parms['NatM_p_1_Fem_GP_1', 'INIT'], 3),
+                                                  'yr$^{-1}$')
+om_table['Natural mortality', 'p.est'] <- 'Estimated'
+
+om_table['Young age', 'c.value'] <- paste(cod_ctl$Growth_Age_for_L1, 'yr')
+om_table['Young age', 'p.value'] <- paste(petrale_ctl$Growth_Age_for_L1, 'yr')
+om_table['Young age', c('c.est', 'p.est')] <- '-'
+
+om_table['Length at young age', 'c.value'] <- paste(cod_ctl$MG_parms['L_at_Amin_Fem_GP_1', 'INIT'], 'cm')
+om_table['Length at young age', 'p.value'] <- paste(round(petrale_ctl$MG_parms['L_at_Amin_Fem_GP_1', 'INIT'], 2), 'cm')
+om_table['Length at young age', c('p.est', 'c.est')] <- 'Estimated'
+
+om_table['CV of length at young age', 'c.value'] <- cod_ctl$MG_parms['CV_young_Fem_GP_1', 'INIT']
+om_table['CV of length at young age', 'p.value'] <- round(petrale_ctl$MG_parms['CV_young_Fem_GP_1', 'INIT'], 2)
+om_table['CV of length at young age', c('p.est', 'c.est')] <- 'Estimated'
+
+om_table['Old age', 'c.value'] <- '$\\infty$'
+om_table['Old age', 'p.value'] <- paste(petrale_ctl$Growth_Age_for_L2, 'yrs')
+om_table['Old age', c('c.est', 'p.est')] <- '-'
+
+om_table['Length at old age', 'c.value'] <- paste(cod_ctl$MG_parms['L_at_Amax_Fem_GP_1', 'INIT'], 'cm')
+om_table['Length at old age', 'p.value'] <- paste(round(petrale_ctl$MG_parms['L_at_Amax_Fem_GP_1', 'INIT'], 2), 'cm')
+om_table['Length at old age', c('p.est', 'c.est')] <- 'Estimated'
+
+om_table['CV of length at old age', 'c.value'] <- cod_ctl$MG_parms['CV_old_Fem_GP_1', 'INIT']
+om_table['CV of length at old age', 'p.value'] <- round(petrale_ctl$MG_parms['CV_old_Fem_GP_1', 'INIT'], 2)
+om_table['CV of length at old age', c('p.est', 'c.est')] <- 'Estimated'
+
+om_table['Von Bertalanffy growth rate', 'c.value'] <- cod_ctl$MG_parms['VonBert_K_Fem_GP_1', 'INIT']
+om_table['Von Bertalanffy growth rate', 'p.value'] <- round(petrale_ctl$MG_parms['VonBert_K_Fem_GP_1', 'INIT'], 3)
+om_table['Von Bertalanffy growth rate', c('p.est', 'c.est')] <- 'Estimated'
+
+rownames(om_table) <- NULL
+
+gt::gt(om_table) |>
+  gt::tab_spanner(label = 'Petrale', columns = c(p.value, p.est)) |>
+  gt::tab_spanner(label = 'Cod', columns = c(c.value, c.est)) |>
+  gt::cols_label(p.value = 'Value',
+                 p.est = 'Treatment',
+                 c.value = 'Value',
+                 c.est = 'Treatment')
+# In this table or another?
+               # 'Average survey length samples per year',
+               # 'Average survey age samples per year',
+               # 'Number of years with survey')
+
+```
+
+
+# Figures
+
+```{r}
+  infotable <- r4ss::SSplotSelex(cod_,
+    fleets = fleet,
+    sexes = sex,
+    sizefactors = Factor,
+    years = years,
+    subplots = 1,
+    plot = FALSE,
+    print = TRUE,
+    plotdir = mod$inputs$dir
+  )$infotable
+```
+
+Figure of selectivities
+
+
+Figure of exploitation rates (and landings from a sample simulation?)
+
+
