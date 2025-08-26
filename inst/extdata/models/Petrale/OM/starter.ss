@@ -1,7 +1,7 @@
 #C starter file written by R function SS_writestarter
 #C rerun model to get more complete formatting in starter.ss_new
 #C should work with SS version: 3.30
-#C file write time: 2024-10-21 17:11:05.794496
+#C file write time: 2025-07-17 15:41:31.023551
 #
 petrale_data.ss #_datfile
 petrale.ctl #_ctlfile

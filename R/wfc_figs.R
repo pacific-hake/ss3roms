@@ -21,32 +21,32 @@ ggsave(filename = 'wfc_figs/hake_recdev.png', device = 'png', dpi = 500, width =
 # load simulation results -------------------------------------------------
 
 cod10_ts <- readr::read_csv('cod_10/ss3sim_ts.csv') |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 cod10_scalar <- readr::read_csv('cod_10/ss3sim_scalar.csv')  |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 cod10_dq <- readr::read_csv('cod_10/ss3sim_dq.csv') |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 
 cod30_ts <- readr::read_csv('bias_adjust/ss3sim_ts.csv') |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 cod30_scalar <- readr::read_csv('bias_adjust/ss3sim_scalar.csv')  |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 cod30_dq <- readr::read_csv('bias_adjust/ss3sim_dq.csv') |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 
 petrale10_ts <- readr::read_csv('petrale_10/ss3sim_ts.csv') |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 petrale10_scalar <- readr::read_csv('petrale_10/ss3sim_scalar.csv')  |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 petrale10_dq <- readr::read_csv('petrale_10/ss3sim_dq.csv') |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 
 petrale30_ts <- readr::read_csv('petrale_30/ss3sim_ts.csv') |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 petrale30_scalar <- readr::read_csv('petrale_30/ss3sim_scalar.csv')  |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 petrale30_dq <- readr::read_csv('petrale_30/ss3sim_dq.csv') |>
-  mutate(scenario = ifelse(scenario == 'no_ind', 'No index', scenario))
+  mutate(scenario = ifelse(scenario == 'no.ind', 'No index', scenario))
 
 ts <- bind_rows(cod_10 = cod10_ts, cod_30 = cod30_ts, petrale_10 = petrale10_ts, petrale_30 = petrale30_ts, .id = 'df') |>
   tidyr::separate_wider_delim(df, names = c('species', 'nyr'), delim = '_') |>

@@ -4,12 +4,7 @@ library(future)
 library(r4ss)
 library(ss3sim)
 library(here)
-
-# to do:
-# return to ss3sim instructions for new OM
-# first try running this using the same sample sizes, F, etc. as cod
-# then, possibly, try to mimic more realism
-# explore forecast file.
+source('R/functions.R')
 
 # set ss3 executable location
 if(Sys.info()['sysname'] == 'Linux'){
@@ -18,7 +13,7 @@ if(Sys.info()['sysname'] == 'Linux'){
   exe_loc = system.file(file.path("bin", "Windows64", "ss3.exe"), package = "ss3sim")
 }
 
-# simulate OM and 1st EM scenario -----------------------------------------
+# set up simulation -----------------------------------------
 
 out <- SS_output('inst/extdata/models/petrale/production', printstats = FALSE, verbose = FALSE)
 prod_mod <- SS_read('inst/extdata/models/petrale/production')
@@ -32,7 +27,7 @@ lencomp_simple <- prod_mod$dat$lencomp |>
   dplyr::summarise(Nsamp = sum(Nsamp)) |>
   dplyr::filter(FltSvy > 0)
 
-df <- setup_scenarios_defaults()
+df <- setup_scenarios_defaults(nscenarios = 1)
 
 #### landings
 df$ce.forecast_num <- 12
@@ -117,160 +112,118 @@ df <- dplyr::select(df, -si.years.2, -si.sds_obs.2, -si.seas.2)
 
 df$om_dir <- 'inst/extdata/models/Petrale/OM'
 df$em_dir <- 'inst/extdata/models/Petrale/EM'
+# df$scenarios <- c('sigR_0.5', 'sigR_1')
+
 rec_flt_ind <- 5
 
 
 # Do OM runs, sample data -------------------------------------------------
 
 nsim <- 100
-sim_dir <- 'petrale_30'
+sim_dir <- file.path('simulations', 'petrale')
 set.seed(52890)
 df$bias_adjust <- FALSE
 
-# unlink('petrale', recursive = TRUE)
+# unlink(sim_dir, recursive = TRUE)
 
 ncore <- parallelly::availableCores()
 cl <- makeCluster(ncore - 1)
 registerDoParallel(cl)
 
 tictoc::tic()
-scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-nohess', 
+scname <- run_ss3sim(iterations = 1:nsim, simdf = df, extras = '-stopph 0 -nohess', 
                      parallel = TRUE, parallel_iterations = TRUE,
-                     scenarios = file.path(sim_dir, df[,paste0('si.sds_obs.', rec_flt_ind)]))
+                     # parallel = FALSE, parallel_iterations = FALSE,
+                     scenarios = file.path(sim_dir, 'base'))
 
 tictoc::toc()
 stopCluster(cl)
 beepr::beep()
 
-# file.copy(exe_loc, 'petrale/1/ss3.exe')
-# bad_out <- SS_output('petrale/0.1/1/em')
-# SS_plots(bad_out)
 
+# Do the actual EM runs ---------------------------------------------------
 
-
-# Run EM w/out Env index --------------------------------------------------
-
-dir.create(file.path(sim_dir, 'no_ind'))
 plan(multisession, workers = ncore-1)
-
-furrr::future_walk(1:nsim, \(iter) {
-  # copy files, read in EM
-  file.copy(from = file.path(sim_dir, df[,paste0('si.sds_obs.', rec_flt_ind)], iter),
-            to = file.path(sim_dir, 'no_ind'), 
-            recursive = TRUE, overwrite = TRUE)
-  mod <- SS_read(file.path(sim_dir, 'no_ind', iter, 'em'))
-  
-  # remove index
-  mod$dat$CPUE <- mod$dat$CPUE[mod$dat$CPUE$index != rec_flt_ind,]
-  mod$ctl$Q_options <- mod$ctl$Q_options[-grep('env', rownames(mod$ctl$Q_options)),]
-  mod$ctl$Q_parms <- mod$ctl$Q_parms[-grep('env', rownames(mod$ctl$Q_parms)),]
-  
-  # set forecast F to historic F
-  om_dat <- SS_readdat(file.path(sim_dir, 'no_ind', iter, "om", 'data_expval.ss'), 
-                       verbose = FALSE)
-  mod$fore$ForeCatch <- filter(om_dat$catch, year > (om_dat$endyr-12)) |>
-    rename(Year = year, Seas = seas, Fleet = fleet,
-           `Catch or F` = catch) |>
-    select(-catch_se)
-  mod$fore$FirstYear_for_caps_and_allocations <- om_dat$endyr + 1
-  
-  # write model and run
-  suppressWarnings(
-    SS_write(mod, file.path(sim_dir, 'no_ind', iter, 'em'), overwrite = TRUE)
-  ) # suppresses warnings about par file name.
-  r4ss::run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
-      exe = exe_loc, verbose = FALSE,
-      # extras = '-nohess', # conducting bias adjustment
-      skipfinished = FALSE)
-  bias <- ss3sim:::calculate_bias(
-    dir = file.path(sim_dir, 'no_ind', iter, 'em'),
-    ctl_file_in = "em.ctl"
-  )
-  r4ss::run(dir = file.path(sim_dir, 'no_ind', iter, 'em'),
-      exe = exe_loc, verbose = FALSE,
-      extras = '-nohess', 
-      skipfinished = FALSE)
-  
-  # unlink(file.path(sim_dir, 'no_ind', iter, 'em', 'bias_00'), recursive = TRUE)
-})
-beepr::beep()
-
-# Run EM under different index SDs ----------------------------------------
-
+sd_seq <- c(0.05, 0.1, 0.2, 0.3, 0.5)
+rec_ind_len <- c(10, 30)
 # based on earlier simulations, > 0.5 all look the same
 # want more contrast at lower values.
-file.rename(from = file.path(sim_dir, '0.1'),
-            to = file.path(sim_dir, 'base'))
-sd_seq <- c(0.05, 0.1, 0.2, 0.3, 0.5)
-purrr::walk(sd_seq, \(sd) dir.create(file.path(sim_dir, sd)))
 
-furrr::future_walk(1:nsim, \(iter) {
-  mod <- SS_read(file.path(sim_dir, 'base', iter, 'em'))
-  rec_yrs <- mod$dat$CPUE$year[mod$dat$CPUE$index == rec_flt_ind]
-  
-  # First replace survey obs with expected values if needed.
-  if(any(is.nan(mod$dat$CPUE$obs))) {
-    warning('replacing NaNs in index with rec dev. SS3 may not behave as expected.')
-    om_res <- r4ss::SS_output(file.path(sim_dir, 'base', iter, "om"),
-                              forecast = FALSE, warn = FALSE, covar = FALSE,
-                              readwt = FALSE, verbose = FALSE,
-                              printstats = FALSE)
-    rec_devs <- dplyr::filter(om_res$recruit, Yr %in% rec_yrs) |>
-      dplyr::pull(dev)
-    mod$dat$CPUE$obs[mod$dat$CPUE$year %in% rec_yrs &
-                       mod$dat$CPUE$index == rec_flt_ind] <- rec_devs
-  }
-  
-  # set forecast F to historic F
-  om_dat <- SS_readdat(file.path(sim_dir, 'base', iter, "om", 'data_expval.ss'), 
-                       verbose = FALSE)
-  mod$fore$ForeCatch <- filter(om_dat$catch, year > (om_dat$endyr-12)) |>
-    rename(Year = year, Seas = seas, Fleet = fleet,
-           `Catch or F` = catch) |>
-    select(-catch_se)
-  mod$fore$FirstYear_for_caps_and_allocations <- om_dat$endyr + 1
-  
-  seed <- sample(100000000, 1)
-  # now sample survey index across new SDs
-  purrr::walk(sd_seq, \(s.d) {
-    # ensure same seed for all SEs per iteration
-    set.seed(seed)
-    tmp_dat <- sample_index(mod$dat, fleets = rec_flt_ind, 
-                            years = list(rec_yrs), 
-                            sds_obs = list(s.d))
-    mod$dat$CPUE[mod$dat$CPUE$index == rec_flt_ind,] <- tmp_dat$CPUE
-    
-    # copy OM, write model and run
-    dir.create(file.path(sim_dir, s.d, iter))
-    file.copy(from = file.path(sim_dir, 'base', iter, 'om'),
-              to = file.path(sim_dir, s.d, iter), 
-              recursive = TRUE, overwrite = TRUE)
-    suppressWarnings(
-      SS_write(mod, file.path(sim_dir, s.d, iter, 'em'), overwrite = TRUE)
-    ) # suppresses parfile warnings
-    r4ss::run(dir = file.path(sim_dir, s.d, iter, 'em'),
-        exe = exe_loc, verbose = FALSE,
-        # extras = '-nohess',
-        skipfinished = FALSE)
-    bias <- ss3sim:::calculate_bias(
-      dir = file.path(sim_dir, s.d, iter, 'em'),
-      ctl_file_in = "em.ctl"
-    )
-    r4ss::run(dir = file.path(sim_dir, s.d, iter, 'em'),
-        exe = exe_loc, verbose = FALSE,
-        extras = '-nohess', 
-        skipfinished = FALSE)
-    # unlink(file.path(sim_dir, s.d, iter, 'em', 'bias_00'), recursive = TRUE)
-  })
-}, .options = furrr::furrr_options(seed = 5890238))
+# plan(sequential, split = TRUE)
+run_no_index_sims(sim_dir = sim_dir, 
+                  rec_flt_ind = rec_flt_ind, 
+                  nsim = nsim, 
+                  do_bias = TRUE)
+
+run_index_sims(sim_dir = sim_dir,
+               rec_flt_ind = rec_flt_ind, 
+               nsim = nsim, 
+               do_bias = TRUE, 
+               sd_seq = sd_seq,
+               rec_ind_len = rec_ind_len)
 
 beepr::beep()
 
+
+# Summarize results -------------------------------------------------------
+
 tictoc::tic()
-plan(sequential)
+plan(sequential, split = TRUE)
+
+scenario_names <- expand.grid(sd_seq, rec_ind_len) |> apply(1, paste, collapse = "_")
+
 sim_res <- get_results_all(directory = sim_dir, 
-                           user_scenarios = c(0.05, 0.1, 0.2, 0.3, 0.5, 'no_ind'),
+                           user_scenarios = c(scenario_names, 'no.ind'),
                            overwrite_files = TRUE)
 tictoc::toc()
 
-beepr::beep()
+
+# Now increase sigma R ----------------------------------------------------
+
+df2 <- df
+df2$co.par_name <- 'SR_sigmaR'
+df2$co.par_int <- 1
+df2$ce.par_name <- 'SR_sigmaR'
+df2$ce.par_int <- 1
+df2$ce.par_phase <- -99
+
+sim_dir <- file.path('simulations', 'petrale_high_sigR')
+set.seed(52890)
+
+cl <- makeCluster(ncore - 1)
+registerDoParallel(cl)
+
+tictoc::tic()
+scname <- run_ss3sim(iterations = 1:nsim, simdf = df2, extras = '-stopph 0 -nohess', 
+                     parallel = TRUE, parallel_iterations = TRUE,
+                     # parallel = FALSE, parallel_iterations = FALSE,
+                     scenarios = file.path(sim_dir, 'base'))
+
+tictoc::toc()
+stopCluster(cl)
+
+plan(multisession, workers = ncore-1)
+
+run_no_index_sims(sim_dir = sim_dir, 
+                  rec_flt_ind = rec_flt_ind, 
+                  nsim = nsim, 
+                  do_bias = TRUE)
+
+run_index_sims(sim_dir = sim_dir,
+               rec_flt_ind = rec_flt_ind, 
+               nsim = nsim, 
+               do_bias = TRUE, 
+               sd_seq = sd_seq,
+               rec_ind_len = rec_ind_len)
+
+tictoc::tic()
+plan(sequential, split = TRUE)
+
+scenario_names <- expand.grid(sd_seq, rec_ind_len) |> apply(1, paste, collapse = "_")
+
+sim_res <- get_results_all(directory = sim_dir, 
+                           user_scenarios = c(scenario_names, 'no.ind'),
+                           overwrite_files = TRUE)
+tictoc::toc()
+
+source('R/cod_OM.R')

@@ -1,41 +1,195 @@
 ---
 title: "TITLE"
-format: docx
+format: 
+  docx: default
+  html: default
 ---
 
 ```{r}
+#| message: false
+#| echo: false
+#| keep-md: true
+
+knitr::opts_chunk$set(echo = FALSE, dpi = 500)
+
 library(r4ss)
 library(here)
-petrale_om <- SS_read(here('inst/extdata/models/petrale/om'))
-petrale_ctl <- petrale_om$ctl
+library(ggplot2)
+library(dplyr)
+
+theme_sleek <- function (base_size = 11, base_family = "") 
+{
+    half_line <- base_size/2
+    theme_light(base_size = base_size, base_family = base_family) + 
+        theme(panel.grid.major = element_blank(), 
+              panel.grid.minor = element_blank(), 
+              axis.ticks.length = unit(half_line/2.2, "pt"), 
+              strip.background = element_rect(fill = NA, colour = NA), 
+              axis.text = element_text(colour = "grey30"), 
+              axis.title = element_text(colour = "grey30"), 
+              legend.title = element_text(colour = "grey30", size = rel(0.9)), 
+              panel.border = element_rect(fill = NA, colour = "grey70", linewidth = 1), 
+              legend.key.size = unit(0.9, "lines"), 
+              legend.text = element_text(size = rel(0.7), colour = "grey30"), 
+              legend.key = element_rect(colour = NA, fill = NA), 
+              legend.background = element_rect(colour = NA, fill = NA), 
+              plot.title = element_text(colour = "grey30", size = rel(1)), 
+              plot.subtitle = element_text(colour = "grey30", size = rel(0.85)), 
+              strip.text = element_text(colour = "grey30"))
+}
+
+theme_set(theme_sleek())
+
 cod_om <- SS_read(here('inst/extdata/models/cod/om'))
 cod_ctl <- cod_om$ctl
+
+petrale_om <- SS_read(here('inst/extdata/models/petrale/om'))
+petrale_ctl <- petrale_om$ctl
+
+cod_om_rep <- SS_output(here('simulations/cod/no.ind/1/om'), verbose = FALSE, printstats = FALSE)
+petrale_om_rep <- SS_output(here('simulations/petrale/no.ind/1/om'), verbose = FALSE, printstats = FALSE)
+
+read_sim_output <- function(filepath, max_grad_criteria = 0.1) {
+  scalar <- file.path(filepath, 'ss3sim_scalar.csv') |>
+    readr::read_csv() |>
+    mutate(scenario = ifelse(scenario == 'no.ind', 'No index_10', scenario)) |>
+    tidyr::separate_wider_delim(cols = scenario, delim = "_", names = c('scenario', 'nyr')) |>
+    mutate(nyr = as.numeric(nyr)) %>%
+    bind_rows({filter(., scenario == 'No index') |> 
+        mutate(nyr = 30)})
+  
+  bad_sims <- scalar |>
+    filter(max_grad > max_grad_criteria) |>
+    select(iteration, scenario, nyr)
+  
+  scalar_filtered <- anti_join(scalar, bad_sims)
+  
+  ts <- file.path(filepath, 'ss3sim_ts.csv') |>
+    readr::read_csv() |>
+    mutate(scenario = ifelse(scenario == 'no.ind', 'No index_10', scenario)) |>
+    tidyr::separate_wider_delim(cols = scenario, delim = "_", names = c('scenario', 'nyr')) |>
+    mutate(nyr = as.numeric(nyr)) %>%
+    bind_rows({filter(., scenario == 'No index') |> # replicate no index rows for both index lengths (for plotting ease)
+        mutate(nyr = 30)}) |>
+    anti_join(bad_sims)
+  
+  dq <- file.path(filepath, 'ss3sim_dq.csv') |>
+    readr::read_csv() |>
+    mutate(scenario = ifelse(scenario == 'no.ind', 'No index_10', scenario)) |>
+    tidyr::separate_wider_delim(cols = scenario, delim = "_", names = c('scenario', 'nyr')) |>
+    mutate(nyr = as.numeric(nyr)) %>%
+    bind_rows({filter(., scenario == 'No index') |> 
+        mutate(nyr = 30)}) |>
+    anti_join(bad_sims)
+  
+  message(paste0(nrow(bad_sims), 
+                 ' simulations were filtered out of ', 
+                 filepath, 
+                 ' due to exceeding the maximum gradient criterion of ',
+                 max_grad_criteria,
+                 '. They are:'))
+  print(bad_sims)
+  
+  return(list(ts = ts, scalar = scalar_filtered, dq = dq, bad_sims = bad_sims))
+}
+
+sim_names <- c('cod', 
+               'cod_high_sigR',
+               'petrale',
+               'petrale_high_sigR',
+               # 'petrale_high_sigR_high_index_se',
+               NULL
+               )
+big_res <- here::here('simulations', sim_names) |>
+  `names<-`(sim_names) |>
+  purrr::map(read_sim_output)
+
+ts <- purrr::map(big_res, purrr::pluck, 'ts') |>
+  bind_rows(.id = 'ID') |>
+  mutate(species = stringr::str_to_title(stringr::str_extract(ID, '^[:alpha:]+')), # any number of letters starting at beginning
+         sigR = ifelse(grepl('_high_sigR', ID), 'high', 'low'),
+         indexSE = ifelse(grepl('index_se', ID), 'high', 'low')) |> 
+         # + 1) * # = 1 if low, 2 if high
+           # ifelse(species == 'Cod', 0.4, 0.5)) |> # these are the baseline sigma Rs for each species
+  select(-ID)
+
+ts_long <- ts |>
+  tidyr::pivot_longer(cols = c(Bio_smry:raw_rec_dev, retainB_2:F_2)) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = value, 
+                     id_cols = c(iteration, scenario, year, name, species, nyr, sigR)) |>
+  filter(!is.na(em)) |> 
+  group_by(species, nyr, name, scenario, year, sigR) |>
+  summarise(mare = mean(abs((em-om)/om)),
+            mre = mean((em-om)/om))|>
+  mutate(year = ifelse(species == 'Petrale', year - petrale_om$dat$styr, year))
+
+scalar <- purrr::map(big_res, purrr::pluck, 'scalar') |>
+  bind_rows(.id = 'ID') |>
+  mutate(species = stringr::str_to_title(stringr::str_extract(ID, '^[:alpha:]+')), # any number of letters starting at beginning
+         sigR = ifelse(grepl('_high_sigR', ID), 'high', 'low'),
+         indexSE = ifelse(grepl('index_se', ID), 'high', 'low')) |> 
+         # + 1) * # = 1 if low, 2 if high
+           # ifelse(species == 'Cod', 0.4, 0.5)) |> # these are the baseline sigma Rs for each species
+  select(-ID)
+
+dq <- purrr::map(big_res, purrr::pluck, 'dq') |>
+  bind_rows(.id = 'ID') |>
+  mutate(species = stringr::str_to_title(stringr::str_extract(ID, '^[:alpha:]+')), # any number of letters starting at beginning
+         sigR = ifelse(grepl('_high_sigR', ID), 'high', 'low'),
+         indexSE = ifelse(grepl('index_se', ID), 'high', 'low')) |> 
+         # + 1) * # = 1 if low, 2 if high
+           # ifelse(species == 'Cod', 0.4, 0.5)) |> # these are the baseline sigma Rs for each species
+  select(-ID)
+
+dq_long <- dq |>
+  tidyr::pivot_longer(Value.SSB:Value.lnSPB) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = value, 
+                     id_cols = c(iteration, scenario, year, name, species, nyr, sigR)) |>
+  filter(!is.na(em)) |> 
+  group_by(species, nyr, name, scenario, year, sigR) |>
+  summarise(mare = mean(abs((em-om)/om)),
+            mre = mean((em-om)/om)) |>
+  mutate(year = ifelse(species == 'Petrale', year - petrale_om$dat$styr, year))
+
+bad_sims <- purrr::map(big_res, purrr::pluck, 'bad_sims') |>
+  bind_rows(.id = 'ID')
+
 ```
 
 # Tables
 
 ```{r}
-par_names <- c('Steepness ($h$)',
-               'log of unfished recruitment ($\\log(R_0)$)',
-               'Standard deviation of log-recruitment deviations ($\\sigma_R$)',
-               'Natural mortality ($M$)',
-               'Young age ($A_\\min$)',
-               'Length at young age ($L_{A_\\min}$)',
-               'CV of length at young age ($CV_{A_\\min}$)',
-               'Old age ($A_\\max$)',
-               'Length at old age ($L_{A_\\max}$)',
-               'CV of length at old age ($CV_{A_\\max}$)',
-               'Von Bertalanffy growth rate ($K$)'
+#| label: tbl-om
+#| tbl-cap: "Operating model parameters and their treatment in estimation models"
+
+par_names <- c('Steepness',
+               'log of unfished recruitment',
+               'Std. dev. of log-recruitment deviations',
+               'Natural mortality',
+               'Young age',
+               'Length at young age',
+               'CV of length at young age',
+               'Old age',
+               'Length at old age',
+               'CV of length at old age',
+               'Von Bertalanffy growth rate',
+               'Imputed age at 50% survey selectivity',
+               'Adult survey catchability'
 )
+
+par_symb <- c('h', '\\log(R_0)', '\\sigma_R', 'M', 'A\\min', 'L_{A\\min}', 
+              'CV_{A\\min}', 'A\\max', 'L_{A\\max}', 'CV_{A\\max}',
+              'K', '', 'Q')
 
 nrows <- length(par_names)
 
-om_table <- data.frame(Parameter = par_names, 
+om_table <- data.frame(Parameter = par_names,
+                       par_symb = par_symb,
                        c.value = rep(as.character(NA), nrows),
                        c.est = rep('Fixed', nrows),
                        p.value = rep(as.character(NA), nrows),
                        p.est = rep('Fixed', nrows))
-rownames(om_table) <- stringr::str_split(par_names, ' \\(', simplify = TRUE)[,1]
+rownames(om_table) <- par_names # stringr::str_split(par_names, ' \\(', simplify = TRUE)[,1]
 
 om_table['Steepness', 'c.value'] <- cod_ctl$SR_parms['SR_BH_steep', 'INIT']
 om_table['Steepness', 'p.value'] <- petrale_ctl$SR_parms['SR_BH_steep', 'INIT']
@@ -44,12 +198,12 @@ om_table['log of unfished recruitment', 'c.value'] <- cod_ctl$SR_parms['SR_LN(R0
 om_table['log of unfished recruitment', 'p.value'] <- round(petrale_ctl$SR_parms['SR_LN(R0)', 'INIT'], 2)
 om_table['log of unfished recruitment', c('c.est', 'p.est')] <- 'Estimated'
 
-om_table['Standard deviation of log-recruitment deviations', 'c.value'] <- cod_ctl$SR_parms['SR_sigmaR', 'INIT']
-om_table['Standard deviation of log-recruitment deviations', 'p.value'] <- petrale_ctl$SR_parms['SR_sigmaR', 'INIT']
+om_table['Std. dev. of log-recruitment deviations', 'c.value'] <- cod_ctl$SR_parms['SR_sigmaR', 'INIT']
+om_table['Std. dev. of log-recruitment deviations', 'p.value'] <- petrale_ctl$SR_parms['SR_sigmaR', 'INIT']
 
-om_table['Natural mortality', 'c.value'] <- paste(cod_ctl$MG_parms['NatM_p_1_Fem_GP_1', 'INIT'], 'yr$^{-1}$')
+om_table['Natural mortality', 'c.value'] <- paste(cod_ctl$MG_parms['NatM_p_1_Fem_GP_1', 'INIT'], 'yr')
 om_table['Natural mortality', 'p.value'] <- paste(round(petrale_ctl$MG_parms['NatM_p_1_Fem_GP_1', 'INIT'], 3),
-                                                  'yr$^{-1}$')
+                                                  'yr')
 om_table['Natural mortality', 'p.est'] <- 'Estimated'
 
 om_table['Young age', 'c.value'] <- paste(cod_ctl$Growth_Age_for_L1, 'yr')
@@ -64,12 +218,12 @@ om_table['CV of length at young age', 'c.value'] <- cod_ctl$MG_parms['CV_young_F
 om_table['CV of length at young age', 'p.value'] <- round(petrale_ctl$MG_parms['CV_young_Fem_GP_1', 'INIT'], 2)
 om_table['CV of length at young age', c('p.est', 'c.est')] <- 'Estimated'
 
-om_table['Old age', 'c.value'] <- '$\\infty$'
+om_table['Old age', 'c.value'] <- '∞'
 om_table['Old age', 'p.value'] <- paste(petrale_ctl$Growth_Age_for_L2, 'yrs')
 om_table['Old age', c('c.est', 'p.est')] <- '-'
 
 om_table['Length at old age', 'c.value'] <- paste(cod_ctl$MG_parms['L_at_Amax_Fem_GP_1', 'INIT'], 'cm')
-om_table['Length at old age', 'p.value'] <- paste(round(petrale_ctl$MG_parms['L_at_Amax_Fem_GP_1', 'INIT'], 2), 'cm')
+om_table['Length at old age', 'p.value'] <- paste(round(petrale_ctl$MG_parms['L_at_Amax_Fem_GP_1', 'INIT'], 1), 'cm')
 om_table['Length at old age', c('p.est', 'c.est')] <- 'Estimated'
 
 om_table['CV of length at old age', 'c.value'] <- cod_ctl$MG_parms['CV_old_Fem_GP_1', 'INIT']
@@ -80,41 +234,357 @@ om_table['Von Bertalanffy growth rate', 'c.value'] <- cod_ctl$MG_parms['VonBert_
 om_table['Von Bertalanffy growth rate', 'p.value'] <- round(petrale_ctl$MG_parms['VonBert_K_Fem_GP_1', 'INIT'], 3)
 om_table['Von Bertalanffy growth rate', c('p.est', 'c.est')] <- 'Estimated'
 
+om_table['Imputed age at 50% survey selectivity', 'c.value'] <- cod_om_rep$ageselex |>
+  filter(Factor == 'Asel2', Fleet == 2, Yr == -2) |> 
+  select(-Factor, -(Yr:Label)) |>
+  tidyr::pivot_longer(cols = -Fleet, names_to = 'Age', values_to = 'Selectivity') |> 
+  mutate(distance_0.5 = abs(Selectivity - 0.5)) |> 
+  group_by(Fleet) |> 
+  filter(distance_0.5 == min(distance_0.5)) |>
+  pull(Age) |>
+  paste('yrs')
+om_table['Imputed age at 50% survey selectivity', 'p.value'] <- petrale_om_rep$ageselex |>
+  filter(Factor == 'Asel2', Fleet == 4, Yr == 1920) |> 
+  select(-Factor, -(Yr:Label)) |>
+  tidyr::pivot_longer(cols = -Fleet, names_to = 'Age', values_to = 'Selectivity') |> 
+  mutate(distance_0.5 = abs(Selectivity - 0.5)) |> 
+  group_by(Fleet) |> 
+  filter(distance_0.5 == min(distance_0.5)) |>
+  pull(Age) |>
+  paste('yrs')
+om_table['Imputed age at 50% survey selectivity', c('c.est', 'p.est')] <- 'Estimated'
+
+om_table['Adult survey catchability', 'c.value'] <- exp(cod_ctl$Q_parms['LnQ_base_Survey(2)', 'INIT'])
+om_table['Adult survey catchability', 'p.value'] <- round(exp(petrale_ctl$Q_parms['LnQ_base_WCGBTS(4)', 'INIT']), 2)
+om_table['Adult survey catchability', 'p.est'] <- 'Float'
+
 rownames(om_table) <- NULL
 
-gt::gt(om_table) |>
-  gt::tab_spanner(label = 'Petrale', columns = c(p.value, p.est)) |>
-  gt::tab_spanner(label = 'Cod', columns = c(c.value, c.est)) |>
-  gt::cols_label(p.value = 'Value',
-                 p.est = 'Treatment',
-                 c.value = 'Value',
-                 c.est = 'Treatment')
-# In this table or another?
-               # 'Average survey length samples per year',
-               # 'Average survey age samples per year',
-               # 'Number of years with survey')
+om_table |>
+  # `names<-`(c('Parameter', 'Cod\\nValue', 'Cod\\nTreatment', 'Petrale\\nValue', 'Petrale\\nTreatment')) |>
+  # gt::gt() |>
+  # gt::cols_label(c.value = 'Value', c.est = 'Treatment', p.value = 'Value', p.est = 'Treatment') |>
+  # gt::tab_spanner('Atlantic cod', columns = c(c.value, c.est)) |>
+  # gt::tab_spanner('Petrale sole', columns = c(p.value, p.est)) 
 
+  # knitr::kable() 
+# kableExtra::add_header_above(c(' ' = 1, 'Atlantic cod' = 2, 'Petrale sole' = 2))
+  flextable::flextable() |>
+  flextable::compose(j = 'Parameter', 
+                     value = flextable::as_paragraph(
+                       Parameter, ' (', 
+                       flextable::as_equation(par_symb),
+                       ')')
+                     ) |>
+  flextable::compose(j = 'Parameter', i = 12,
+                     value = flextable::as_paragraph(Parameter)) |>
+  flextable::compose(j = c('c.value', 'p.value'), i = 4,
+                     value = flextable::as_paragraph(., flextable::as_sup('-1')), 
+                     use_dot = TRUE) |>
+  flextable::delete_columns(j = 'par_symb') |>
+  flextable::set_header_labels(c.value = 'Value',
+                               c.est = 'Treatment',
+                               p.value = 'Value',
+                               p.est = 'Treatment') |>
+  flextable::add_header_row(values = c(' ', 'Atlantic cod', 'Petrale sole'), colwidths = c(1, 2, 2)) |>
+  flextable::set_table_properties(width = 1, layout = 'autofit') |>
+  flextable::fontsize(size = 10, part = 'all')
 ```
 
 
 # Figures
 
 ```{r}
-  infotable <- r4ss::SSplotSelex(cod_,
-    fleets = fleet,
-    sexes = sex,
-    sizefactors = Factor,
-    years = years,
-    subplots = 1,
-    plot = FALSE,
-    print = TRUE,
-    plotdir = mod$inputs$dir
-  )$infotable
+#| label: fig-selex
+#| fig-cap: "Size selectivity and imputed age selectivity in the Atlantic cod (a, b) and Petrale sole (c, d) operating models. Note that Fishery1 age selectivity on Petrale sole never reaches 1. This is because the length selectivity reaches 1 at lengths larger than the mean maximum length. However, the model does include individuals larger than the mean maximum length due to growth variability."
+cod_age_selex <- cod_om_rep$ageselex |>
+  filter(Factor == 'Asel2', Fleet != 3, Yr == -2) |> # fleet 3 = env, any year will do
+  select(-Factor, -(Yr:Label)) |>
+  tidyr::pivot_longer(cols = -Fleet, names_to = 'Age', values_to = 'Selectivity') |>
+  mutate(Age = as.numeric(Age),
+         Fleet = ifelse(Fleet == 1, 'Fishery', 'Survey')) |>
+  ggplot() +
+  geom_line(aes(x = Age, y = Selectivity, col = factor(Fleet), group = factor(Fleet))) +
+  labs(x = 'Age (yrs)') +
+  theme(legend.position = 'none') +
+  scale_color_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3)[2:3])
+
+cod_size_selex <- cod_om_rep$sizeselex |> 
+  filter(Factor == 'Lsel', Yr == -2, Fleet != 3) |>
+  select(-Factor, -(Yr:Label)) |>
+  tidyr::pivot_longer(cols = -Fleet, names_to = 'Length', values_to = 'Selectivity') |>
+  mutate(Length = as.numeric(Length),
+         Fleet = ifelse(Fleet == 1, 'Fishery', 'Survey')) |>
+  ggplot() +
+  geom_line(aes(x = Length, y = Selectivity, col = factor(Fleet), group = factor(Fleet))) +
+  labs(x = 'Length (cm)', col = 'Fleet') +
+  scale_color_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3)[2:3])
+
+petrale_age_selex <- petrale_om_rep$ageselex |>
+  filter(Factor == 'Asel2', Fleet != 3, Fleet != 5, Yr == 1920) |> # fleet 3: triennial, fleet 5: env
+  select(-Factor, -(Yr:Label)) |>
+  tidyr::pivot_longer(cols = -Fleet, names_to = 'Age', values_to = 'Selectivity') |>
+  mutate(Age = as.numeric(Age),
+         Fleet = case_when(Fleet == 1 ~ 'Fishery1', 
+                           Fleet == 2 ~ 'Fishery2',
+                           TRUE ~ 'Survey')) |>
+  ggplot() +
+  geom_line(aes(x = Age, y = Selectivity, col = factor(Fleet), group = factor(Fleet))) +
+  labs(x = 'Age (yrs)', col = 'Fleet') +
+  theme(legend.position = 'none') +
+  scale_color_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3))
+
+petrale_size_selex <- petrale_om_rep$sizeselex |> 
+  filter(Factor == 'Lsel', Fleet != 3, Fleet != 5, Yr == 1920) |> # fleet 3: triennial, fleet 5: env
+  select(-Factor, -(Yr:Label)) |>
+  tidyr::pivot_longer(cols = -Fleet, names_to = 'Length', values_to = 'Selectivity') |>
+  mutate(Length = as.numeric(Length),
+         Fleet = case_when(Fleet == 1 ~ 'Fishery1', 
+                           Fleet == 2 ~ 'Fishery2',
+                           TRUE ~ 'Survey')) |>
+  ggplot() +
+  geom_line(aes(x = Length, y = Selectivity, col = factor(Fleet), group = factor(Fleet))) +
+  labs(x = 'Length (cm)', col = 'Fleet') +
+  scale_color_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3))
+
+cod_title <- cowplot::ggdraw() + 
+  cowplot::draw_label("Atlantic cod selectivity", x = 0, hjust = 0) +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+petrale_title <- cowplot::ggdraw() + 
+  cowplot::draw_label("Petrale sole selectivity", x = 0, hjust = 0) +
+  theme(plot.margin = margin(0, 0, 0, 7))
+
+cowplot::plot_grid(
+  cod_title,
+  cowplot::plot_grid(cod_age_selex, cod_size_selex, ncol = 2, rel_widths = c(0.4, 0.6), labels = c('a)', 'b)')),
+  petrale_title,
+  cowplot::plot_grid(petrale_age_selex, petrale_size_selex, ncol = 2, rel_widths = c(0.4, 0.6), labels = c('c)', 'd)')),
+  nrow = 4, rel_heights = c(1, 6, 1, 6)
+)
+
 ```
 
-Figure of selectivities
+```{r}
+#| label: fig-exploit
+#| fig-cap: "Exploitation rates for the Petrale sole operating model (a), and example catch time series for both operating models (b, c). Exploitation rates for Atlantic cod are assumed constant at 0.1052 yr^-1^ when they are non-zero."
+
+exploitation <- petrale_om_rep$exploitation |>
+  select(Yr, North, South) |>
+  filter(Yr <= 2034) |>
+  tidyr::pivot_longer(cols = -Yr, names_to = 'Fleet', values_to = 'exploitation') |>
+  mutate(Fleet = ifelse(Fleet == 'North', 'Fishery1', 'Fishery2'),
+         Yr = Yr - 1922) |>
+  ggplot() +
+  geom_line(aes(x = Yr, y = exploitation, col = Fleet, group = Fleet)) +
+  labs(x = 'Year', y = expression(paste('Exploitation rate (', yr^{-1}, ')'))) +
+  scale_color_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3)[2:3])
+
+# could add horizontal line for cod to this figure?
+
+petrale_catch <- petrale_om_rep$catch |>
+  filter(dead_bio > 0) |>
+  mutate(Yr = Yr - 1922,
+         Fleet_Name = ifelse(Fleet_Name == 'North', 'Fishery1', 'Fishery2')) |>
+  ggplot() +
+  geom_col(aes(x = Yr, y = dead_bio, fill = Fleet_Name)) +
+  labs(x = 'Year', y = 'Petrale catch (mt)', fill = 'Fleet') +
+  scale_fill_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3)[2:3]) +
+  theme(legend.position = 'none')
 
 
-Figure of exploitation rates (and landings from a sample simulation?)
+cod_catch <- cod_om_rep$catch |>
+  ggplot() +
+  geom_col(aes(x = Yr, y = dead_bio)) +
+  labs(x = 'Year', y = 'Cod catch (mt)', fill = 'Fleet')
 
+cowplot::plot_grid(
+  exploitation,
+  cowplot::plot_grid(cod_catch, petrale_catch, ncol = 2, labels = c('b)', 'c)')),
+  nrow = 2, labels = c('a)', '')
+)
+
+```
+
+```{r}
+#| warning: false
+#| label: fig-sim-ex
+#| fig-cap: "Example simulations of the operating model (dashed) and estimation models (solid) at different levels of precision of the recruitment index with baseline values for $\\sigma_R$. Gray shaded region is the forecast period, where only catch data is provided to the estimation model."
+lty_vec <- c(2, rep(1, 6)) |>
+  `names<-`(c('Oper. mod.', rev(unique(ts$scenario))))
+
+# possible: 29
+dq |> 
+  filter(model_run == 'em' | scenario == 'No index', nyr == 10, sigR == 'low', year <= 2034,
+         (iteration == 25 & species == 'Cod') | (iteration == 30 & species == 'Petrale'))|>
+  mutate(Model = factor(ifelse(model_run == 'om', 'Oper. mod.', scenario))) |>
+  mutate(Model = forcats::fct_rev(Model),
+         year = ifelse(species == 'Petrale', year - petrale_om$dat$styr, year)) |>
+  ggplot() +
+  annotate(geom = 'rect', xmin = 100, xmax = 112, ymin = 0, ymax = 1, fill = 'gray90') +
+  geom_line(aes(x = year, y = Value.Bratio, col = Model, lty = Model)) +
+  scale_color_manual(values = c('gray50', LaCroixColoR::lacroix_palette('Orange', 6))) +
+  labs(x = 'Year', y = 'Relative spawning output') +
+  # scale_y_continuous(labels = NULL) +
+  scale_linetype_manual(values = lty_vec) +
+  facet_wrap(~ species) +
+  ylim(0, NA)
+
+```
+
+```{r}
+#| warning: false
+#| label: fig-term-yr-rec
+#| fig-cap: "Relative error of the log of recruitment in the terminal year of the estimation model. Index is included in the *final* 10 or 30 years of the estimation model."
+ts |> 
+  filter(year == 100 | year == 2022) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = Recruit_0, 
+                     id_cols = c(iteration, scenario, species, sigR, nyr, indexSE)) |>
+  mutate(are = abs((em-om)/om),
+         rel_err = (log(em) - log(om))/log(om),
+         sigR = ifelse(sigR == 'low', '"Low"~sigma[R]', '"High"~sigma[R]')) |> 
+  group_by(scenario, nyr) |>
+  ggplot() +
+  geom_violin(aes(x = scenario, y = rel_err, fill = factor(nyr),
+                  # alpha = nyr, 
+                  group = paste(nyr, scenario))) + #factor(nyr, levels = c(30, 10)))) +
+  geom_hline(yintercept = 0, color = 'black') +
+  scale_fill_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3)[2:3]) +
+  labs(x = 'Index SE', y = 'Relative error of\nlog(terminal year recruitment)', 
+       fill = 'Number of\nyears of index') +
+  facet_grid(species ~ sigR, labeller = label_parsed, scales = 'free_y')
+
+## To decide:: Keep index SEs the same for high and low sigR? They are unrealistically low for high sigR. I am guessing if you increase sigR and index SE proportionally nothing changes? (Should make sure?)
+```
+
+```{r}
+#| warning: false
+#| label: fig-mid-ts-rec
+#| fig-cap: "Relative error of the log of recruitment in the 80th year of the estimation model. Index is included in the *final* 10 or 30 years of the estimation model"
+ts |> 
+  filter(year == 80 | year == 2022-20) |>
+  tidyr::pivot_wider(names_from = model_run, values_from = Recruit_0, 
+                     id_cols = c(iteration, scenario, species, sigR, nyr)) |>
+  mutate(are = abs((em-om)/om),
+         rel_err = (log(em) - log(om))/log(om),
+         sigR = ifelse(sigR == 'low', '"Low"~sigma[R]', '"High"~sigma[R]')) |> 
+  group_by(scenario, nyr) |>
+  ggplot() +
+  geom_violin(aes(x = scenario, y = rel_err, fill = factor(nyr),
+                  # alpha = nyr, 
+                  group = paste(nyr, scenario))) + #factor(nyr, levels = c(30, 10)))) +
+  geom_hline(yintercept = 0, color = 'black') +
+  # scale_fill_manual(values = rev(LaCroixColoR::lacroix_palette('Orange', 6))) +
+  labs(x = 'Index SE', y = 'Relative error of\nlog(terminal year recruitment)', 
+       fill = 'Number of\nyears of index') +
+  facet_grid(sigR ~ species, labeller = label_parsed) +
+  ggsidekick::theme_sleek()
+
+# Appendix? Delete entirely?
+```
+
+```{r}
+#| warning: false
+#| label: fig-r0
+#| fig-cap: "Relative error of the estimate of the log of unfished recruitment. Index is included in the *final* 10 or 30 years of the estimation model. Note varying y-axis scales."
+p.high_sigR <- scalar |> 
+  filter(sigR == 'high') |>
+  tidyr::pivot_wider(names_from = model_run, values_from = SR_LN_R0, 
+                     id_cols = c(iteration, scenario, species, nyr, sigR)) |>
+  mutate(are = abs((em-om)/om),
+         rel_err = (em - om)/om) |> 
+  group_by(scenario, species, nyr) |>
+  ggplot() +
+  geom_violin(aes(x = scenario, y = rel_err, fill = factor(nyr, levels = c(30, 10)))) +
+  geom_hline(yintercept = 0, color = 'black') +
+  scale_fill_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3)[2:3]) +
+  labs(x = 'Index SE', y = 'Relative error of log of unfished recruitment', 
+       title = parse(text = '"High"~sigma[R]')) +
+  facet_wrap(~ species, scales = 'free_y', nrow = 2) +
+  theme(legend.position = 'none',
+        strip.text = element_blank(), 
+        plot.title = element_text(hjust = 0.5, size = rel(0.8)),
+        axis.title.x = element_blank(),
+        plot.margin = margin(r = 0))
+
+p.low_sigR <- scalar |> 
+  filter(sigR == 'low') |>
+  tidyr::pivot_wider(names_from = model_run, values_from = SR_LN_R0, 
+                     id_cols = c(iteration, scenario, species, nyr, sigR)) |>
+  mutate(are = abs((em-om)/om),
+         rel_err = (em - om)/om) |> 
+  group_by(scenario, species, nyr) |>
+  ggplot() +
+  geom_violin(aes(x = scenario, y = rel_err, fill = factor(nyr, levels = c(30, 10)))) +
+  geom_hline(yintercept = 0, color = 'black') +
+  scale_fill_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3)[2:3]) +
+  labs(x = 'Index SE', y = '',
+       fill = 'Number of\nyears of index',
+       title = parse(text = '"Low"~sigma[R]')) +
+  facet_wrap(~ species, scales = 'free_y', nrow = 2, strip.position = 'right') +
+  theme(plot.title = element_text(hjust = 0.5, size = rel(0.8)),
+        axis.title.x = element_blank(), 
+        plot.margin = margin(l = 0))
+
+x.title <- cowplot::ggdraw() + 
+  cowplot::draw_label("Index SE", x = 0.45, hjust = 0.5, color = 'grey30', vjust = 0, size = 11)
+
+legend <- cowplot::get_legend(p.low_sigR +
+                              theme(legend.box.margin = margin(0, 0, 0, 12)))
+
+cowplot::plot_grid(
+  cowplot::plot_grid(p.high_sigR,
+                     p.low_sigR + theme(legend.position = 'none'),
+                     legend,
+                     nrow = 1, rel_widths = c(1, 1, 0.35)),
+  x.title,
+  nrow = 2, rel_heights = c(1, 0.1))
+
+```
+
+```{r}
+#| warning: false
+#| label: fig-M
+#| fig-cap: "Relative error of the estimate of natural mortality in the Petrale sole model. Natural mortality is fixed at its true value in the cod model. Index is included in the *final* 10 or 30 years of the estimation model"
+scalar |> 
+  filter(species == 'Petrale') |> 
+  tidyr::pivot_wider(names_from = model_run, values_from = NatM_uniform_Fem_GP_1, 
+                     id_cols = c(iteration, scenario, species, nyr, sigR)) |>
+  mutate(are = abs((em-om)/om),
+         rel_err = (em - om)/om,
+         sigR = ifelse(sigR == 'low', '"Low"~sigma[R]', '"High"~sigma[R]')) |>
+  group_by(scenario) |>
+  ggplot() +
+  geom_violin(aes(x = scenario, y = rel_err, fill = factor(nyr, levels = c(30, 10)))) +
+  geom_hline(yintercept = 0, color = 'black') +
+  scale_fill_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3)[2:3]) +
+  facet_wrap(~ sigR, labeller = label_parsed) +
+  labs(x = 'Index SE', y = 'Relative error of natural mortality', 
+       fill = 'Number of\nyears of index')
+```
+
+
+```{r}
+mare_ts <- dq_long |>
+  ggplot() +
+  annotate(geom = 'rect', xmin = 100, xmax = 114, ymin = 0, ymax = 1.5, fill = 'gray90') +
+  geom_line(aes(x = year, y = mare, col = scenario, linetype = factor(nyr), group = paste(scenario, nyr))) +
+  scale_color_manual(values = rev(LaCroixColoR::lacroix_palette('Orange', 6))) +
+  labs(x = 'Year', color = 'Index SE') +
+  facet_wrap(~ species, scales = 'free_y', nrow = 2) +
+  NULL
+
+mare_ts %+% filter(dq_long, name == 'Value.Bratio', sigR == 'high') +
+  ylab('Mean absolute relative error(SSB)')
+
+
+ts_long |>
+  mutate(year = ifelse(species == 'Petrale', year - petrale_om$dat$styr, year)) |>
+  filter(name == 'Bio_smry') |>
+  ggplot() +
+  geom_line(aes(x = year, y = mre, col = scenario, linetype = factor(nyr))) +
+  facet_grid(species ~ sigR, scales = 'free_y')
+
+
+```
 

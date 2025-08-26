@@ -148,15 +148,15 @@
 #
 #_SizeSelex
 #_LO	HI	INIT	PRIOR	PR_SD	PR_type	PHASE	env-var	use_dev	dev_mnyr	dev_mxyr	dev_PH	Block	Blk_Fxn  #  parm_name
-  15	75	61.2108	43.1	99	0	 2	0	0	0	0	0	1	2	#_SizeSel_P_1_North(1) 
+  15	75	61.2108	43.1	99	0	 2	0	0	0	0	0	0	0	#_SizeSel_P_1_North(1) 
  -15	 4	    -15	 -15	99	0	-3	0	0	0	0	0	0	0	#_SizeSel_P_2_North(1) 
-  -4	12	  5.261	3.42	99	0	 3	0	0	0	0	0	1	2	#_SizeSel_P_3_North(1) 
+  -4	12	  5.261	3.42	99	0	 3	0	0	0	0	0	0	0	#_SizeSel_P_3_North(1) 
   -2	20	     20	0.21	99	0	-3	0	0	0	0	0	0	0	#_SizeSel_P_4_North(1) 
 -999	 9	   -999	-8.9	99	0	-4	0	0	0	0	0	0	0	#_SizeSel_P_5_North(1) 
 -999	 9	   -999	0.15	99	0	-4	0	0	0	0	0	0	0	#_SizeSel_P_6_North(1) 
-  15	75	54.2777	43.1	99	0	 2	0	0	0	0	0	1	2	#_SizeSel_P_1_South(2) 
+  15	75	54.2777	43.1	99	0	 2	0	0	0	0	0	0	0	#_SizeSel_P_1_South(2) 
  -15	 4	    -15	 -15	99	0	-3	0	0	0	0	0	0	0	#_SizeSel_P_2_South(2) 
-  -4	12	5.96648	3.42	99	0	 3	0	0	0	0	0	1	2	#_SizeSel_P_3_South(2) 
+  -4	12	5.96648	3.42	99	0	 3	0	0	0	0	0	0	0	#_SizeSel_P_3_South(2) 
   -2	20	     20	0.21	99	0	-3	0	0	0	0	0	0	0	#_SizeSel_P_4_South(2) 
 -999	 9	   -999	-8.9	99	0	-4	0	0	0	0	0	0	0	#_SizeSel_P_5_South(2) 
 -999	 9	   -999	0.15	99	0	-4	0	0	0	0	0	0	0	#_SizeSel_P_6_South(2) 
@@ -168,33 +168,7 @@
 -999	 9	   -999	0.15	99	0	-4	0	0	0	0	0	0	0	#_SizeSel_P_6_WCGBTS(4)
 #_AgeSelex
 #_No age_selex_parm
-# timevary selex parameters 
-#_LO	HI	INIT	PRIOR	PR_SD	PR_type	PHASE
-15	75	61.5081	43.1	99	0	5	#_SizeSel_P_1_North(1)_BLK1repl_1973
-15	75	58.1804	43.1	99	0	5	#_SizeSel_P_1_North(1)_BLK1repl_1983
-15	75	57.0477	43.1	99	0	5	#_SizeSel_P_1_North(1)_BLK1repl_1993
-15	75	58.0381	43.1	99	0	5	#_SizeSel_P_1_North(1)_BLK1repl_2003
-15	75	 58.267	43.1	99	0	5	#_SizeSel_P_1_North(1)_BLK1repl_2011
-15	75	58.4429	43.1	99	0	5	#_SizeSel_P_1_North(1)_BLK1repl_2018
--4	12	5.51139	3.42	99	0	6	#_SizeSel_P_3_North(1)_BLK1repl_1973
--4	12	 5.3959	3.42	99	0	6	#_SizeSel_P_3_North(1)_BLK1repl_1983
--4	12	5.58417	3.42	99	0	6	#_SizeSel_P_3_North(1)_BLK1repl_1993
--4	12	5.48454	3.42	99	0	6	#_SizeSel_P_3_North(1)_BLK1repl_2003
--4	12	5.41558	3.42	99	0	6	#_SizeSel_P_3_North(1)_BLK1repl_2011
--4	12	5.28638	3.42	99	0	6	#_SizeSel_P_3_North(1)_BLK1repl_2018
-15	75	50.7367	43.1	99	0	5	#_SizeSel_P_1_South(2)_BLK1repl_1973
-15	75	48.9507	43.1	99	0	5	#_SizeSel_P_1_South(2)_BLK1repl_1983
-15	75	49.9245	43.1	99	0	5	#_SizeSel_P_1_South(2)_BLK1repl_1993
-15	75	50.8758	43.1	99	0	5	#_SizeSel_P_1_South(2)_BLK1repl_2003
-15	75	50.5432	43.1	99	0	5	#_SizeSel_P_1_South(2)_BLK1repl_2011
-15	75	51.3385	43.1	99	0	5	#_SizeSel_P_1_South(2)_BLK1repl_2018
--4	12	6.25412	3.42	99	0	6	#_SizeSel_P_3_South(2)_BLK1repl_1973
--4	12	5.26473	3.42	99	0	6	#_SizeSel_P_3_South(2)_BLK1repl_1983
--4	12	 4.9369	3.42	99	0	6	#_SizeSel_P_3_South(2)_BLK1repl_1993
--4	12	4.98433	3.42	99	0	6	#_SizeSel_P_3_South(2)_BLK1repl_2003
--4	12	4.96723	3.42	99	0	6	#_SizeSel_P_3_South(2)_BLK1repl_2011
--4	12	4.91593	3.42	99	0	6	#_SizeSel_P_3_South(2)_BLK1repl_2018
-# info on dev vectors created for selex parms are reported with other devs after tag parameter section
+#_no timevary selex parameters
 #
 0 #  use 2D_AR1 selectivity(0/1):  experimental feature
 #_no 2D_AR1 selex offset used

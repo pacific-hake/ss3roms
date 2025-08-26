@@ -77,6 +77,11 @@ mod$dat$CPUE <- dplyr::filter(mod$dat$CPUE, index != 3)
 mod$dat$lencomp <- dplyr::filter(mod$dat$lencomp, FltSvy != 3)
 # Triennial did not collect age structures for petrale
 
+# get rid of selectivity time blocks
+mod$ctl$size_selex_parms$Block <- 0
+mod$ctl$size_selex_parms$Block_Fxn <- 0
+mod$ctl$size_selex_parms_tv <- NULL
+
 # add environmental index fleet
 # don't want to use env sensitivity because other parameter estimates are somewhat different.
 petrale.env <- add_fleet(datlist = mod$dat, ctllist = mod$ctl, 

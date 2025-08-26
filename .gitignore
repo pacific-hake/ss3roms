@@ -27,12 +27,9 @@ inst/extdata/models/retrospectives/*
 !inst/extdata/models/retrospectives/*/wtatage.ss
 *.png
 *.exe
-sims/*/*.csv
+simulations/*/*/*.csv
 # ss3 files
-sims/*/*
-sims_low_n/*/*
-bias_adjust/*/*
-cod_10/*/*
+simulations/*/*/*
 !bias_adjust/*/1
 petrale/*/*
 petrale/*/*.csv
