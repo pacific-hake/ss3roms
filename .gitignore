@@ -27,6 +27,7 @@ inst/extdata/models/retrospectives/*
 simulations/*/*/*.csv
 # ss3 files
 simulations/*/*/*
+!simulations/*/no.ind/1/
 ss3.b*
 ss3.log
 ss3.p*

@@ -1,0 +1,8 @@
+Note 1 Information: Max data length bin: 62  < max pop len bins: 78; so will accumulate larger pop len bins
+Warning 1 : At least one block pattern ends in endyr. Check the output parameter value time series to see if the values in forecast years are as intended.
+Warning 2 Adjustment:  recdev_end: 2034 > retro_yr: 2022 reset 
+Note 2 Suggestion: Recruitment survey: 5 has data in: 0, which is before first early recdev: 1905. Suggest start recdevs earlier
+Warning 3 : 1st iteration warning: ssb(endyr)/ssb(styr)= 0.00010067; suggest start with larger R0 to get near 0.4; or use depletion fleet option
+Warning 4 : 1st iteration warning: catch logL > 50% total logL; check configuration; suggest start with larger R0
+Note 3 Information: A revised protocol for the Fcast_yr specification is available and recommended.
+ 4 warnings  and 3 notes 
