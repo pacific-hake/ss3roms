@@ -4,10 +4,6 @@ ss3roms.Rproj
 .RData
 .Ruserdata
 R/scratch.R
-test/*
-test_negEKE/*
-test_posEKE/*
-test_rec/*
 inst/extdata/models/PacificHake/*
 inst/extdata/models/retrospectives/*
 !*/forecast.ss
@@ -27,12 +23,10 @@ inst/extdata/models/retrospectives/*
 !inst/extdata/models/retrospectives/*/wtatage.ss
 *.png
 *.exe
+*.docx
 simulations/*/*/*.csv
 # ss3 files
 simulations/*/*/*
-!bias_adjust/*/1
-petrale/*/*
-petrale/*/*.csv
 ss3.b*
 ss3.log
 ss3.p*
@@ -47,4 +41,3 @@ console.output.txt
 ss_summary.sso
 gradfil*.tmp
 cmpdiff.tmp
-petrale_10

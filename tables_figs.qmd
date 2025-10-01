@@ -565,25 +565,59 @@ scalar |>
 
 
 ```{r}
+
+ranges <- dq_long |>
+  # filter(sigR != 'high' | year >= 95) |>
+  group_by(species, name, sigR) |>
+  summarise(max_mare = max(mare, na.rm = TRUE),
+            max_mre = max(mre, na.rm = TRUE),
+            min_mre = min(mre, na.rm = TRUE))
+
 mare_ts <- dq_long |>
   ggplot() +
-  annotate(geom = 'rect', xmin = 100, xmax = 114, ymin = 0, ymax = 1.5, fill = 'gray90') +
   geom_line(aes(x = year, y = mare, col = scenario, linetype = factor(nyr), group = paste(scenario, nyr))) +
   scale_color_manual(values = rev(LaCroixColoR::lacroix_palette('Orange', 6))) +
   labs(x = 'Year', color = 'Index SE') +
-  facet_wrap(~ species, scales = 'free_y', nrow = 2) +
+  facet_wrap(~ species, scales = 'free_y', nrow = 2, strip.position = 'right') +
   NULL
 
-mare_ts %+% filter(dq_long, name == 'Value.Bratio', sigR == 'high') +
-  ylab('Mean absolute relative error(SSB)')
+p <- mare_ts
+p$layers <- c(geom_rect(aes(ymax = 1.05*max_mare), xmin = 100, xmax = 114, ymin = 0, fill = 'gray90', 
+                        data = filter(ranges, name == 'Value.Bratio', sigR == 'high')), 
+              mare_ts$layers)
 
+high_sigR <- p %+% filter(dq_long, name == 'Value.Bratio', sigR == 'high', ) +
+  labs(y = 'Mean absolute relative error\nof Spawning depletion', 
+       title = parse(text = '"High"~sigma[R]')) +
+  theme(legend.position = 'none',
+        strip.text = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = rel(0.8)),
+        axis.title.x = element_blank())
 
-ts_long |>
-  mutate(year = ifelse(species == 'Petrale', year - petrale_om$dat$styr, year)) |>
-  filter(name == 'Bio_smry') |>
-  ggplot() +
-  geom_line(aes(x = year, y = mre, col = scenario, linetype = factor(nyr))) +
-  facet_grid(species ~ sigR, scales = 'free_y')
+p$layers <- c(annotate(geom = 'rect', ymax = 0.45, xmin = 100, xmax = 114, ymin = 0, fill = 'gray90'), 
+              mare_ts$layers)
+
+high_sigR_late <- p %+% filter(dq_long, name == 'Value.Bratio', sigR == 'high', year >= 95, species == 'Petrale') +
+  lims(x = c(95, 114)) +
+  theme(legend.position = 'none',
+        strip.text = element_blank(),
+        axis.title = element_blank())
+
+p$layers <- c(geom_rect(aes(ymax = 1.05*max_mare), xmin = 100, xmax = 114, ymin = 0, fill = 'gray90', 
+                        data = filter(ranges, name == 'Value.Bratio', sigR == 'low')), 
+              mare_ts$layers)
+
+low_sigR <- p %+% filter(dq_long, name == 'Value.Bratio', sigR == 'low') +
+  ggtitle(parse(text = '"Low"~sigma[R]')) +
+  theme(legend.position = 'none',
+        strip.text = element_blank(),
+        plot.title = element_text(hjust = 0.5, size = rel(0.8)),
+        axis.title = element_blank())
+
+legend <- cowplot::get_legend(low_sigR +
+                              theme(legend.box.margin = margin(0, 0, 0, 12)))
+
+cowplot::plot_grid(high_sigR, low_sigR, nrow = 1)
 
 
 ```
