@@ -88,7 +88,6 @@ read_sim_output <- function(filepath, max_grad_criteria = 0.1) {
                  ' due to exceeding the maximum gradient criterion of ',
                  max_grad_criteria,
                  '. They are:'))
-  print(bad_sims)
   
   return(list(ts = ts, scalar = scalar_filtered, dq = dq, bad_sims = bad_sims))
 }
@@ -153,6 +152,15 @@ dq_long <- dq |>
 
 bad_sims <- purrr::map(big_res, purrr::pluck, 'bad_sims') |>
   bind_rows(.id = 'ID')
+
+stat1 <- dq |>
+  filter(year %in% c(112, 2034), model_run == 'em', nyr == 10, sigR == 'low') |>
+  tidyr::pivot_wider(
+    id_cols = c(species, iteration), 
+    names_from = scenario, 
+    values_from = Value.Bratio
+  ) |> 
+  mutate(diff = `No index` - `0.05`) |> summarize(mean(diff > 0))
 
 ```
 
@@ -396,7 +404,7 @@ petrale_catch <- petrale_om_rep$catch |>
 cod_catch <- cod_om_rep$catch |>
   ggplot() +
   geom_col(aes(x = Yr, y = dead_bio)) +
-  labs(x = 'Year', y = 'Cod catch (mt)', fill = 'Fleet')
+  labs(x = 'Year', y = 'Cod catch (mt)')
 
 cowplot::plot_grid(
   exploitation,
@@ -409,14 +417,14 @@ cowplot::plot_grid(
 ```{r}
 #| warning: false
 #| label: fig-sim-ex
-#| fig-cap: "Example simulations of the operating model (dashed) and estimation models (solid) at different levels of precision of the recruitment index with baseline values for $\\sigma_R$. Gray shaded region is the forecast period, where only catch data is provided to the estimation model."
+#| fig-cap: "Example simulations of the operating model (dashed) and estimation models (solid) at different levels of precision of the recruitment index with baseline values for $\\sigma_R$ and recruitment indices for the final ten years (when included). Gray shaded region is the forecast period, where only catch data is provided to the estimation model."
 lty_vec <- c(2, rep(1, 6)) |>
   `names<-`(c('Oper. mod.', rev(unique(ts$scenario))))
 
-# possible: 29
+# possible: 3, 8, 46, 86
 dq |> 
   filter(model_run == 'em' | scenario == 'No index', nyr == 10, sigR == 'low', year <= 2034,
-         (iteration == 25 & species == 'Cod') | (iteration == 30 & species == 'Petrale'))|>
+         (iteration == 46 & species == 'Cod') | (iteration == 30 & species == 'Petrale'))|>
   mutate(Model = factor(ifelse(model_run == 'om', 'Oper. mod.', scenario))) |>
   mutate(Model = forcats::fct_rev(Model),
          year = ifelse(species == 'Petrale', year - petrale_om$dat$styr, year)) |>
@@ -429,7 +437,6 @@ dq |>
   scale_linetype_manual(values = lty_vec) +
   facet_wrap(~ species) +
   ylim(0, NA)
-
 ```
 
 ```{r}
@@ -447,12 +454,13 @@ ts |>
   ggplot() +
   geom_violin(aes(x = scenario, y = rel_err, fill = factor(nyr),
                   # alpha = nyr, 
-                  group = paste(nyr, scenario))) + #factor(nyr, levels = c(30, 10)))) +
+                  group = paste(nyr, scenario)), linewidth = 0.5) + #factor(nyr, levels = c(30, 10)))) +
   geom_hline(yintercept = 0, color = 'black') +
   scale_fill_manual(values = inauguration::inauguration(name = 'inauguration_2021', n = 3)[2:3]) +
   labs(x = 'Index SE', y = 'Relative error of\nlog(terminal year recruitment)', 
        fill = 'Number of\nyears of index') +
-  facet_grid(species ~ sigR, labeller = label_parsed, scales = 'free_y')
+  facet_grid(species ~ sigR, labeller = label_parsed, scales = 'free_y') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ## To decide:: Keep index SEs the same for high and low sigR? They are unrealistically low for high sigR. I am guessing if you increase sigR and index SE proportionally nothing changes? (Should make sure?)
 ```
@@ -462,7 +470,7 @@ ts |>
 #| label: fig-mid-ts-rec
 #| fig-cap: "Relative error of the log of recruitment in the 80th year of the estimation model. Index is included in the *final* 10 or 30 years of the estimation model"
 ts |> 
-  filter(year == 80 | year == 2022-20) |>
+  filter(year == 69 | year == 2022-31) |>
   tidyr::pivot_wider(names_from = model_run, values_from = Recruit_0, 
                      id_cols = c(iteration, scenario, species, sigR, nyr)) |>
   mutate(are = abs((em-om)/om),
@@ -486,7 +494,7 @@ ts |>
 ```{r}
 #| warning: false
 #| label: fig-r0
-#| fig-cap: "Relative error of the estimate of the log of unfished recruitment. Index is included in the *final* 10 or 30 years of the estimation model. Note varying y-axis scales."
+#| fig-cap: "Relative error of the estimate of the log of unfished recruitment. Index is included in the final 10 or 30 years of the estimation model. Note varying y-axis scales."
 p.high_sigR <- scalar |> 
   filter(sigR == 'high') |>
   tidyr::pivot_wider(names_from = model_run, values_from = SR_LN_R0, 
@@ -545,7 +553,7 @@ cowplot::plot_grid(
 ```{r}
 #| warning: false
 #| label: fig-M
-#| fig-cap: "Relative error of the estimate of natural mortality in the Petrale sole model. Natural mortality is fixed at its true value in the cod model. Index is included in the *final* 10 or 30 years of the estimation model"
+#| fig-cap: "Relative error of the estimate of natural mortality in the Petrale sole model. Natural mortality is fixed at its true value in the cod model. Index is included in the final 10 or 30 years of the estimation model"
 scalar |> 
   filter(species == 'Petrale') |> 
   tidyr::pivot_wider(names_from = model_run, values_from = NatM_uniform_Fem_GP_1, 
@@ -565,6 +573,8 @@ scalar |>
 
 
 ```{r}
+#| label: fig-temp
+#| fig-cap: ""
 
 ranges <- dq_long |>
   # filter(sigR != 'high' | year >= 95) |>
